@@ -1,41 +1,41 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useMemo } from 'react';
 import type { Note, MidiNote } from '@/app/types/music';
 
 interface KeyboardMapping {
   [key: string]: MidiNote;
 }
 
-// Keyboard layout for 25 keys (C3 to C5)
+// Key positions for 25-key layout (relative offsets from start note)
 // Bottom row (white keys): A S D F G H J K L ; ' for C D E F G A B C D E F
 // Top row (black keys): W E T Y U O P [ for C# D# F# G# A# C# D# F#
-const KEYBOARD_TO_MIDI: KeyboardMapping = {
-  // Octave 3 (C3-B3)
-  'a': 48,  // C3
-  'w': 49,  // C#3
-  's': 50,  // D3
-  'e': 51,  // D#3
-  'd': 52,  // E3
-  'f': 53,  // F3
-  't': 54,  // F#3
-  'g': 55,  // G3
-  'y': 56,  // G#3
-  'h': 57,  // A3
-  'u': 58,  // A#3
-  'j': 59,  // B3
+const KEY_TO_OFFSET: Record<string, number> = {
+  // First octave (white keys)
+  'a': 0,   // C
+  'w': 1,   // C#
+  's': 2,   // D
+  'e': 3,   // D#
+  'd': 4,   // E
+  'f': 5,   // F
+  't': 6,   // F#
+  'g': 7,   // G
+  'y': 8,   // G#
+  'h': 9,   // A
+  'u': 10,  // A#
+  'j': 11,  // B
   
-  // Octave 4 (C4-B4)
-  'k': 60,  // C4 (Middle C)
-  'o': 61,  // C#4
-  'l': 62,  // D4
-  'p': 63,  // D#4
-  ';': 64,  // E4
-  "'": 65,  // F4
-  '[': 66,  // F#4
+  // Second octave
+  'k': 12,  // C (Middle C when startNote=48)
+  'o': 13,  // C#
+  'l': 14,  // D
+  'p': 15,  // D#
+  ';': 16,  // E
+  "'": 17,  // F
+  '[': 18,  // F#
   
-  // Octave 5 (C5-G5)
-  ']': 67,  // G5 - only if we need more keys
+  // Third partial octave
+  ']': 19,  // G
 };
 
 interface UseKeyboardOptions {
@@ -43,6 +43,7 @@ interface UseKeyboardOptions {
   onNoteOff?: (note: Note | MidiNote) => void;
   enabled?: boolean;
   defaultVelocity?: number;
+  startNote?: MidiNote; // Dynamic starting note (default C3 = 48)
 }
 
 export function useKeyboard({
@@ -50,8 +51,18 @@ export function useKeyboard({
   onNoteOff,
   enabled = true,
   defaultVelocity = 0.7,
+  startNote = 48, // Default to C3
 }: UseKeyboardOptions = {}) {
   const pressedKeysRef = useRef<Set<string>>(new Set());
+
+  // Generate keyboard mapping based on current startNote
+  const keyboardMapping = useMemo(() => {
+    const mapping: KeyboardMapping = {};
+    for (const [key, offset] of Object.entries(KEY_TO_OFFSET)) {
+      mapping[key] = (startNote + offset) as MidiNote;
+    }
+    return mapping;
+  }, [startNote]);
 
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (!enabled) return;
@@ -70,7 +81,7 @@ export function useKeyboard({
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
 
     const key = event.key.toLowerCase();
-    const midiNote = KEYBOARD_TO_MIDI[key];
+    const midiNote = keyboardMapping[key];
 
     if (midiNote !== undefined) {
       // Double-check not already pressed (belt and suspenders)
@@ -83,20 +94,20 @@ export function useKeyboard({
       event.preventDefault();
       onNoteOn?.(midiNote, defaultVelocity);
     }
-  }, [enabled, onNoteOn, defaultVelocity]);
+  }, [enabled, onNoteOn, defaultVelocity, keyboardMapping]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     if (!enabled) return;
 
     const key = event.key.toLowerCase();
-    const midiNote = KEYBOARD_TO_MIDI[key];
+    const midiNote = keyboardMapping[key];
 
     if (midiNote !== undefined) {
       pressedKeysRef.current.delete(key);
       event.preventDefault();
       onNoteOff?.(midiNote);
     }
-  }, [enabled, onNoteOff]);
+  }, [enabled, onNoteOff, keyboardMapping]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -136,6 +147,6 @@ export function useKeyboard({
   }, [enabled]);
 
   return {
-    keyboardMapping: KEYBOARD_TO_MIDI,
+    keyboardMapping,
   };
 }

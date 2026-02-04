@@ -1,26 +1,41 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useAudio } from '@/app/hooks/useAudio';
 import { useMidi } from '@/app/hooks/useMidi';
 import { useKeyboard } from '@/app/hooks/useKeyboard';
 import { PianoKeyboard } from '@/app/components/piano';
 import { StatusIndicator } from '@/app/components/ui/StatusIndicator';
 import { InstrumentSelector } from '@/app/components/ui/InstrumentSelector';
-import { midiToNote } from '@/app/utils/music';
+import { midiToNote, getOptimalStartNote } from '@/app/utils/music';
 import type { Note, MidiNote } from '@/app/types/music';
 
 export default function Home() {
   const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
+  const [startNote, setStartNote] = useState<MidiNote>(48); // Default: C3
+  const lastMidiNoteSource = useRef<'midi' | 'other'>('other');
   
   const { isInitialized, isInitializing, error, initialize, playNote, stopNote, setPreset, presetName, isLoadingPreset, presets } = useAudio();
 
-  const handleNotePress = useCallback((note: Note | MidiNote, velocity?: number) => {
+  const handleNotePress = useCallback((note: Note | MidiNote, velocity?: number, source: 'midi' | 'keyboard' | 'click' = 'keyboard') => {
     playNote(note, velocity);
+    
     // Track pressed notes for visual feedback
     const noteStr = typeof note === 'number' ? midiToNote(note) : note;
     setPressedNotes(prev => new Set(prev).add(noteStr));
-  }, [playNote]);
+
+    // Only adjust range for MIDI input
+    if (source === 'midi') {
+      const midiNote = typeof note === 'number' ? note : 0; // We'll only get numbers from MIDI
+      
+      // Check if note is outside current range
+      const currentEnd = startNote + 24; // 25 keys (0-24 offset)
+      if (midiNote < startNote || midiNote > currentEnd) {
+        const newStart = getOptimalStartNote(midiNote);
+        setStartNote(newStart);
+      }
+    }
+  }, [playNote, startNote]);
 
   const handleNoteRelease = useCallback((note: Note | MidiNote) => {
     stopNote(note);
@@ -32,6 +47,16 @@ export default function Home() {
     });
   }, [stopNote]);
 
+  // MIDI input - mark as MIDI source
+  const handleMidiNoteOn = useCallback((note: MidiNote, velocity: number) => {
+    handleNotePress(note, velocity, 'midi');
+  }, [handleNotePress]);
+
+  // Keyboard/click input - don't adjust range
+  const handleLocalNotePress = useCallback((note: Note | MidiNote, velocity?: number) => {
+    handleNotePress(note, velocity, 'keyboard');
+  }, [handleNotePress]);
+
   const {
     isSupported: midiSupported,
     isInitialized: midiInitialized,
@@ -39,16 +64,17 @@ export default function Home() {
     error: midiError,
     initialize: initializeMidi,
   } = useMidi({
-    onNoteOn: handleNotePress,
+    onNoteOn: handleMidiNoteOn,
     onNoteOff: handleNoteRelease,
     autoEnable: true,
   });
 
-  // Computer keyboard input
+  // Computer keyboard input - follows visible range
   useKeyboard({
-    onNoteOn: handleNotePress,
+    onNoteOn: handleLocalNotePress,
     onNoteOff: handleNoteRelease,
     enabled: isInitialized,
+    startNote,
   });
 
   const handleStartClick = async () => {
@@ -110,9 +136,9 @@ export default function Home() {
             <div className="space-y-8">
               <div className="flex justify-center">
                 <PianoKeyboard
-                  startNote={48}
+                  startNote={startNote}
                   numKeys={25}
-                  onNotePress={handleNotePress}
+                  onNotePress={handleLocalNotePress}
                   onNoteRelease={handleNoteRelease}
                   pressedNotes={pressedNotes}
                 />
@@ -134,7 +160,7 @@ export default function Home() {
                   </div>
                 </div>
                 <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
-                  Range: C3 to C5 (25 keys)
+                  Range: {midiToNote(startNote)} to {midiToNote((startNote + 24) as MidiNote)}
                 </p>
               </div>
             </div>

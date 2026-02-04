@@ -14,12 +14,19 @@ describe('useKeyboard', () => {
     jest.clearAllMocks();
   });
 
-  it('should expose keyboard mapping', () => {
+  it('should expose keyboard mapping with default startNote (C3=48)', () => {
     const { result } = renderHook(() => useKeyboard());
 
     expect(result.current.keyboardMapping).toBeDefined();
     expect(result.current.keyboardMapping['a']).toBe(48); // C3
     expect(result.current.keyboardMapping['k']).toBe(60); // C4 (Middle C)
+  });
+
+  it('should adjust mapping based on startNote', () => {
+    const { result } = renderHook(() => useKeyboard({ startNote: 36 })); // C2
+
+    expect(result.current.keyboardMapping['a']).toBe(36); // C2
+    expect(result.current.keyboardMapping['k']).toBe(48); // C3
   });
 
   it('should trigger note on keydown', () => {
