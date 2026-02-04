@@ -325,6 +325,18 @@ class AudioEngine {
       return;
     }
 
+    // Don't play notes while preset is loading
+    if (this.isLoadingPreset) {
+      console.warn('Preset is still loading');
+      return;
+    }
+
+    // For samplers, check if samples are loaded
+    if (this.synth instanceof Tone.Sampler && !this.synth.loaded) {
+      console.warn('Sampler samples not yet loaded');
+      return;
+    }
+
     const noteStr = typeof note === 'number' ? this.midiToNote(note) : note;
     const normalizedVelocity = Math.max(0, Math.min(1, velocity));
     
@@ -435,12 +447,15 @@ class AudioEngine {
     });
 
     // Create synth based on preset type
-    this.synth = this.createSynth(preset).connect(this.filter);
+    const newSynth = this.createSynth(preset);
 
-    // If it's a Sampler, wait for samples to load
-    if (preset.synthType === 'sampler' && this.synth instanceof Tone.Sampler) {
-      await this.synth.loaded;
+    // If it's a Sampler, wait for samples to load BEFORE connecting
+    if (preset.synthType === 'sampler' && newSynth instanceof Tone.Sampler) {
+      await newSynth.loaded;
     }
+
+    // Now connect after loading is complete
+    this.synth = newSynth.connect(this.filter);
 
     // Reconnect signal chain
     this.filter.connect(this.reverb);
