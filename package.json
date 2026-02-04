@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "echo '\\n→ Open http://localhost:3000/cortina\\n' && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
