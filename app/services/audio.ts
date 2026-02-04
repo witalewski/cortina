@@ -1,52 +1,120 @@
 import * as Tone from 'tone';
 import type { Note, MidiNote } from '@/app/types/music';
 
+// Synth preset configuration
+interface SynthPreset {
+  name: string;
+  synth: {
+    harmonicity: number;
+    modulationIndex: number;
+    oscillator: { type: string };
+    envelope: {
+      attack: number;
+      decay: number;
+      sustain: number;
+      release: number;
+    };
+    modulation: { type: string };
+    modulationEnvelope: {
+      attack: number;
+      decay: number;
+      sustain: number;
+      release: number;
+    };
+  };
+  filter: {
+    type: 'lowpass' | 'highpass' | 'bandpass';
+    frequency: number;
+    Q: number;
+    rolloff: -12 | -24 | -48 | -96;
+  };
+  filterMapping: {
+    baseCutoffLow: number;  // Hz - for low notes (C3)
+    baseCutoffHigh: number; // Hz - for high notes (C5)
+    velocityCutoffRange: number; // Hz - velocity adds brightness
+  };
+  reverb: {
+    decay: number;
+    preDelay: number;
+    wet: number;
+  };
+}
+
+// Warm piano preset - current optimized sound
+const WARM_PIANO_PRESET: SynthPreset = {
+  name: 'Warm Piano',
+  synth: {
+    harmonicity: 2,
+    modulationIndex: 12,
+    oscillator: { type: 'sine' },
+    envelope: {
+      attack: 0.02,
+      decay: 0.7,
+      sustain: 0.02,
+      release: 1
+    },
+    modulation: { type: 'sine' },
+    modulationEnvelope: {
+      attack: 0.01,
+      decay: 0.4,
+      sustain: 0.1,
+      release: 0.5
+    }
+  },
+  filter: {
+    type: 'lowpass',
+    frequency: 3000,
+    Q: 1,
+    rolloff: -24
+  },
+  filterMapping: {
+    baseCutoffLow: 4000,
+    baseCutoffHigh: 2000,
+    velocityCutoffRange: 2000
+  },
+  reverb: {
+    decay: 1.5,
+    preDelay: 0.01,
+    wet: 0.15
+  }
+};
+
 class AudioEngine {
   private synth: Tone.PolySynth | null = null;
   private filter: Tone.Filter | null = null;
   private reverb: Tone.Reverb | null = null;
   private initialized = false;
+  private currentPreset: SynthPreset = WARM_PIANO_PRESET;
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
     await Tone.start();
     
-    // Create filter (lowpass to remove harsh highs)
+    const preset = this.currentPreset;
+    
+    // Create filter from preset
     this.filter = new Tone.Filter({
-      type: 'lowpass',
-      frequency: 3000, // Will be modulated per-note by velocity
-      Q: 1,
-      rolloff: -24
+      type: preset.filter.type,
+      frequency: preset.filter.frequency,
+      Q: preset.filter.Q,
+      rolloff: preset.filter.rolloff
     });
 
-    // Create reverb for spatial realism
+    // Create reverb from preset
     this.reverb = new Tone.Reverb({
-      decay: 1.5,
-      preDelay: 0.01
+      decay: preset.reverb.decay,
+      preDelay: preset.reverb.preDelay
     });
 
+    // Create synth from preset
     this.synth = new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 2,
-      modulationIndex: 12,
-      oscillator: {
-        type: 'sine'
-      },
-      envelope: {
-        attack: 0.02,
-        decay: 0.7,
-        sustain: 0.02,
-        release: 1
-      },
-      modulation: {
-        type: 'sine'
-      },
-      modulationEnvelope: {
-        attack: 0.01,
-        decay: 0.4,
-        sustain: 0.1,
-        release: 0.5
-      }
+      harmonicity: preset.synth.harmonicity,
+      modulationIndex: preset.synth.modulationIndex,
+      oscillator: preset.synth.oscillator,
+      envelope: preset.synth.envelope,
+      modulation: preset.synth.modulation,
+      modulationEnvelope: preset.synth.modulationEnvelope
     }).connect(this.filter);
 
     // Signal chain: Synth → Filter → Reverb (wet 0.15) → Destination
@@ -55,8 +123,8 @@ class AudioEngine {
     // Also send dry signal to destination
     this.filter.toDestination();
     
-    // Set reverb wet/dry mix (15% wet, reduced from 20% for clarity)
-    this.reverb.wet.value = 0.15;
+    // Set reverb wet/dry mix from preset
+    this.reverb.wet.value = preset.reverb.wet;
 
     this.initialized = true;
   }
@@ -81,14 +149,12 @@ class AudioEngine {
     const noteRatio = (midiNote - 36) / 36; // C3=0, C5=1
     const noteRatioClamped = Math.max(0, Math.min(1, noteRatio));
     
-    // Lower notes get higher base cutoff
-    const baseCutoffLow = 4000;   // Hz - for low notes
-    const baseCutoffHigh = 2000;  // Hz - for high notes
+    // Get filter mapping from preset
+    const { baseCutoffLow, baseCutoffHigh, velocityCutoffRange } = this.currentPreset.filterMapping;
     const baseCutoff = baseCutoffLow - (noteRatioClamped * (baseCutoffLow - baseCutoffHigh));
     
     // Velocity modulation
-    const cutoffRange = 2000; // Hz - velocity adds brightness
-    const cutoff = baseCutoff + (normalizedVelocity * cutoffRange);
+    const cutoff = baseCutoff + (normalizedVelocity * velocityCutoffRange);
     this.filter.frequency.setValueAtTime(cutoff, Tone.now());
     
     this.synth.triggerAttack(noteStr, undefined, velocityCurved);
@@ -143,3 +209,5 @@ class AudioEngine {
 }
 
 export const audioEngine = new AudioEngine();
+export type { SynthPreset };
+export { WARM_PIANO_PRESET };
