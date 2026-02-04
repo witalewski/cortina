@@ -26,7 +26,7 @@ class AudioEngine {
       envelope: {
         attack: 0.02,
         decay: 0.3,
-        sustain: 0.15,
+        sustain: 0.02,
         release: 1
       }
     }).connect(this.filter);
