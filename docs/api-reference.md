@@ -88,17 +88,36 @@ interface MonoSynthPreset {
     wet: number;
   };
 }
+
+interface SamplerPreset extends BaseSynthPreset {
+  synthType: 'sampler';
+  sampleMap: Record<string, string>; // Note name → CDN URL
+}
+
+type SynthPreset = FMSynthPreset | MonoSynthPreset | SamplerPreset;
 ```
 
 **Available Presets:**
 - `WARM_PIANO_PRESET` (FMSynthPreset) - Rich, expressive piano sound
 - `BASIC_SYNTH_PRESET` (FMSynthPreset) - Simple, bright synthesizer
 - `ACID_BASS_PRESET` (MonoSynthPreset) - TB-303-inspired squelchy bass
+- `SAMPLED_PIANO_PRESET` (SamplerPreset) - Realistic acoustic piano with CDN samples
 
 **Preset Switching:**
 ```typescript
+// Instant switching for synth presets
 audioEngine.setPreset(ACID_BASS_PRESET);
 audioEngine.getPresetName(); // "Acid Bass"
+
+// Async switching for sampler presets (loads samples)
+await audioEngine.setPreset(SAMPLED_PIANO_PRESET);
+audioEngine.isPresetLoading(); // false when done
+```
+
+**Loading State:**
+```typescript
+// Check if a preset is currently loading
+audioEngine.isPresetLoading(); // boolean
 ```
 
 ### `midiService` (midi.ts)

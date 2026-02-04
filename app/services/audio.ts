@@ -70,7 +70,14 @@ interface MonoSynthPreset extends BaseSynthPreset {
   };
 }
 
-type SynthPreset = FMSynthPreset | MonoSynthPreset;
+// Sampler preset (for Sampled Piano)
+interface SamplerPreset extends BaseSynthPreset {
+  synthType: 'sampler';
+  sampleMap: Record<string, string>;  // Note name → CDN URL
+  // No filterMapping needed - samples are realistic as-is
+}
+
+type SynthPreset = FMSynthPreset | MonoSynthPreset | SamplerPreset;
 
 // Warm piano preset - current optimized sound
 const WARM_PIANO_PRESET: FMSynthPreset = {
@@ -189,14 +196,55 @@ const ACID_BASS_PRESET: MonoSynthPreset = {
   }
 };
 
+// Sampled piano preset - Real piano samples from CDN
+// Using every 3rd note (C, E, G#) to minimize download size (~2-3MB)
+// Tone.js pitch-shifts between sampled notes for seamless playback
+const CDN_BASE = 'https://cdn.jsdelivr.net/npm/tonejs-instrument-piano-mp3@1.0.0';
+const SAMPLED_PIANO_PRESET: SamplerPreset = {
+  name: 'Sampled Piano',
+  synthType: 'sampler',
+  sampleMap: {
+    'C1': `${CDN_BASE}/C1.mp3`,
+    'E1': `${CDN_BASE}/E1.mp3`,
+    'G1': `${CDN_BASE}/G1.mp3`,
+    'C2': `${CDN_BASE}/C2.mp3`,
+    'E2': `${CDN_BASE}/E2.mp3`,
+    'G2': `${CDN_BASE}/G2.mp3`,
+    'C3': `${CDN_BASE}/C3.mp3`,
+    'E3': `${CDN_BASE}/E3.mp3`,
+    'G3': `${CDN_BASE}/G3.mp3`,
+    'C4': `${CDN_BASE}/C4.mp3`,
+    'E4': `${CDN_BASE}/E4.mp3`,
+    'G4': `${CDN_BASE}/G4.mp3`,
+    'C5': `${CDN_BASE}/C5.mp3`,
+    'E5': `${CDN_BASE}/E5.mp3`,
+    'G5': `${CDN_BASE}/G5.mp3`,
+    'C6': `${CDN_BASE}/C6.mp3`,
+    'E6': `${CDN_BASE}/E6.mp3`,
+    'G6': `${CDN_BASE}/G6.mp3`,
+  },
+  filter: {
+    type: 'lowpass',
+    frequency: 8000,  // Very high - samples already sound good
+    Q: 0.5,           // Minimal resonance
+    rolloff: -12
+  },
+  reverb: {
+    decay: 1.2,
+    preDelay: 0.01,
+    wet: 0.12  // Moderate room ambience
+  }
+};
+
 class AudioEngine {
-  private synth: Tone.PolySynth | null = null;
+  private synth: Tone.PolySynth | Tone.Sampler | null = null;
   private filter: Tone.Filter | null = null;
   private reverb: Tone.Reverb | null = null;
   private initialized = false;
   private currentPreset: SynthPreset = WARM_PIANO_PRESET;
+  private isLoadingPreset = false;
 
-  private createSynth(preset: SynthPreset): Tone.PolySynth {
+  private createSynth(preset: SynthPreset): Tone.PolySynth | Tone.Sampler {
     if (preset.synthType === 'fm') {
       return new Tone.PolySynth(Tone.FMSynth, {
         harmonicity: preset.synth.harmonicity,
@@ -206,7 +254,7 @@ class AudioEngine {
         modulation: preset.synth.modulation,
         modulationEnvelope: preset.synth.modulationEnvelope
       });
-    } else {
+    } else if (preset.synthType === 'mono') {
       // mono synth type
       return new Tone.PolySynth(Tone.MonoSynth, {
         oscillator: preset.synth.oscillator,
@@ -224,6 +272,13 @@ class AudioEngine {
           baseFrequency: preset.filterEnvelope.baseFrequency,
           octaves: preset.filterEnvelope.octaves
         }
+      });
+    } else {
+      // sampler type
+      return new Tone.Sampler({
+        urls: preset.sampleMap,
+        release: 1,
+        baseUrl: ''  // URLs are already complete
       });
     }
   }
@@ -288,7 +343,7 @@ class AudioEngine {
       const cutoff = baseCutoff + (normalizedVelocity * velocityCutoffRange);
       
       this.filter.frequency.setValueAtTime(cutoff, Tone.now());
-    } else {
+    } else if (this.currentPreset.synthType === 'mono') {
       // MonoSynth: velocity affects filter envelope octaves
       const { velocityOctaveBoost } = this.currentPreset.filterMapping;
       const baseOctaves = this.currentPreset.filterEnvelope.octaves;
@@ -299,6 +354,7 @@ class AudioEngine {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (this.synth as any).set({ filterEnvelope: { octaves } });
     }
+    // Sampler: no special filter handling needed - samples sound good as-is
     
     this.synth.triggerAttack(noteStr, undefined, velocityCurved);
   }
@@ -344,11 +400,18 @@ class AudioEngine {
     return this.currentPreset.name;
   }
 
+  isPresetLoading(): boolean {
+    return this.isLoadingPreset;
+  }
+
   async setPreset(preset: SynthPreset): Promise<void> {
     if (!this.initialized) {
       this.currentPreset = preset;
       return;
     }
+
+    // Set loading state
+    this.isLoadingPreset = true;
 
     // Dispose current audio nodes
     this.synth?.dispose();
@@ -374,11 +437,19 @@ class AudioEngine {
     // Create synth based on preset type
     this.synth = this.createSynth(preset).connect(this.filter);
 
+    // If it's a Sampler, wait for samples to load
+    if (preset.synthType === 'sampler' && this.synth instanceof Tone.Sampler) {
+      await this.synth.loaded;
+    }
+
     // Reconnect signal chain
     this.filter.connect(this.reverb);
     this.reverb.toDestination();
     this.filter.toDestination();
     this.reverb.wet.value = preset.reverb.wet;
+
+    // Clear loading state
+    this.isLoadingPreset = false;
   }
 
   dispose(): void {
@@ -393,5 +464,5 @@ class AudioEngine {
 }
 
 export const audioEngine = new AudioEngine();
-export type { SynthPreset, FMSynthPreset, MonoSynthPreset };
-export { WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, ACID_BASS_PRESET };
+export type { SynthPreset, FMSynthPreset, MonoSynthPreset, SamplerPreset };
+export { WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, ACID_BASS_PRESET, SAMPLED_PIANO_PRESET };

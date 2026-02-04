@@ -8,16 +8,17 @@ This document describes the sound design philosophy and implementation for Corti
 2. **Expressiveness** - Velocity affects both volume AND timbre
 3. **Spatial realism** - Sound exists "in a room", not "in your head"
 4. **Diverse palette** - Multiple presets for different musical styles
-5. **Future flexibility** - Architecture allows adding sample-based instruments later
+5. **Hybrid approach** - Mix of synthesis and sampled instruments for flexibility
 
 ## Architecture: Multi-Synth System
 
-The synthesizer supports multiple synth types through a preset system:
+The synthesizer supports multiple sound sources through a preset system:
 
 - **FM Synthesis** (`FMSynth`) - For rich, evolving sounds like piano
 - **Mono Synthesis** (`MonoSynth`) - For classic analog sounds with filter envelopes
+- **Sampled Instruments** (`Sampler`) - For realistic acoustic sounds with lazy loading
 
-Each preset specifies its synth type and configuration, allowing diverse sound palettes within one engine.
+Each preset specifies its source type and configuration, allowing diverse sound palettes within one engine.
 
 ## Presets
 
@@ -75,16 +76,41 @@ MonoSynth (with filter envelope) → External Filter → Reverb → Destination
 **Why MonoSynth?**
 Unlike FMSynth, MonoSynth has a built-in filter envelope that modulates cutoff frequency over time - essential for acid bass "squelch". The envelope sweeps from `baseFrequency` up by `octaves` and back down following ADSR shape.
 
+### 4. Sampled Piano (Sampler)
+
+**Goal:** Realistic acoustic piano sound using real instrument samples.
+
+**Signal Chain:**
+```
+Sampler → Filter (subtle) → Reverb → Destination
+```
+
+**Key Parameters:**
+- **Sample Source:** CDN-hosted piano samples (tonejs-instrument-piano-mp3)
+- **Sample Strategy:** Every 3rd note (C, E, G) - Tone.js pitch-shifts between
+- **Download Size:** ~2-3MB on first load (cached by browser afterward)
+- **Filter:** Very subtle (8000Hz cutoff) - samples already sound realistic
+- **Reverb:** 12% wet for moderate room ambience
+- **Loading:** Asynchronous with UI indicator during download
+
+**Sample Mapping:**
+18 carefully selected notes from C1-G6 provide full keyboard coverage. Tone.js automatically pitch-shifts intermediate notes for seamless playback.
+
+**Why Sampler?**
+Sampled instruments provide the most realistic sound but require downloading audio files. We use lazy loading - samples only download when the user selects this instrument. Browser caching ensures samples only download once per device.
+
 ## Technical Comparisons
 
-| Feature | Warm Piano | Basic Synth | Acid Bass |
-|---------|-----------|-------------|-----------|
-| Synth Type | FMSynth | FMSynth | MonoSynth |
-| Complexity | High FM | Low FM | Filter Envelope |
-| Character | Warm, rich | Bright, simple | Squelchy, resonant |
-| Filter Technique | Frequency-aware | Static high | Envelope sweep |
-| Velocity Target | Filter cutoff | Filter cutoff | Envelope octaves |
-| Reverb | 15% (spatial) | 5% (dry) | 5% (dry) |
+| Feature | Warm Piano | Basic Synth | Acid Bass | Sampled Piano |
+|---------|-----------|-------------|-----------|---------------|
+| Source Type | FMSynth | FMSynth | MonoSynth | Sampler |
+| Complexity | High FM | Low FM | Filter Envelope | Real samples |
+| Character | Warm, rich | Bright, simple | Squelchy, resonant | Realistic acoustic |
+| Filter Technique | Frequency-aware | Static high | Envelope sweep | Minimal (bypass) |
+| Velocity Target | Filter cutoff | Filter cutoff | Envelope octaves | Sample playback |
+| Reverb | 15% (spatial) | 5% (dry) | 5% (dry) | 12% (room) |
+| Download Size | 0 bytes | 0 bytes | 0 bytes | ~3MB (cached) |
+| Loading Time | Instant | Instant | Instant | 1-3 seconds |
 
 ## Velocity Response
 
@@ -100,7 +126,7 @@ This makes soft playing easier to control and mimics real instrument dynamics.
 All parameters centralized in preset interfaces:
 
 ```typescript
-type SynthPreset = FMSynthPreset | MonoSynthPreset;
+type SynthPreset = FMSynthPreset | MonoSynthPreset | SamplerPreset;
 
 interface FMSynthPreset {
   synthType: 'fm';
@@ -116,18 +142,36 @@ interface MonoSynthPreset {
   filterMapping: { velocityOctaveBoost };
   // ...
 }
+
+interface SamplerPreset {
+  synthType: 'sampler';
+  sampleMap: Record<string, string>; // Note → CDN URL
+  // No filterMapping - samples are realistic as-is
+}
 ```
 
 **Benefits:**
 - Type-safe preset definitions
 - Easy to add new presets
-- Runtime preset switching
+- Runtime preset switching with async loading support
 - Self-documenting
+
+## Lazy Loading for Sampled Instruments
+
+Sampled instruments use asynchronous loading to avoid blocking app startup:
+
+1. **User selects sampled instrument** → UI shows loading indicator
+2. **Sampler creates audio nodes** → Begins downloading samples from CDN
+3. **Browser caches files** → Subsequent loads are instant
+4. **Loading completes** → UI updates, instrument ready to play
+
+This ensures synthesized instruments work instantly while sampled instruments load on demand.
 
 ## Future Enhancements
 
 - Additional synth types (AMSynth, PluckSynth)
-- Sample-based instruments
+- More sampled instruments (guitar, strings, brass)
+- Multi-velocity layer sampling
 - Per-note detuning for natural variation
 - Sustain pedal support
 - Effects per preset (distortion, chorus, etc.)

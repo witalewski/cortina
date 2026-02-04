@@ -12,6 +12,15 @@ jest.mock('tone', () => {
     set: jest.fn(),
   };
 
+  const mockSampler = {
+    triggerAttack: jest.fn(),
+    triggerRelease: jest.fn(),
+    connect: jest.fn().mockReturnThis(),
+    toDestination: jest.fn().mockReturnThis(),
+    dispose: jest.fn(),
+    loaded: Promise.resolve(true),
+  };
+
   const mockFilter = {
     frequency: {
       setValueAtTime: jest.fn(),
@@ -29,6 +38,7 @@ jest.mock('tone', () => {
   };
 
   const mockPolySynth = jest.fn(() => mockSynth);
+  const mockSamplerConstructor = jest.fn(() => mockSampler);
   const mockFilterConstructor = jest.fn(() => mockFilter);
   const mockReverbConstructor = jest.fn(() => mockReverb);
 
@@ -39,6 +49,7 @@ jest.mock('tone', () => {
     Synth: jest.fn(),
     FMSynth: jest.fn(),
     MonoSynth: jest.fn(),
+    Sampler: mockSamplerConstructor,
     Filter: mockFilterConstructor,
     Reverb: mockReverbConstructor,
     context: {

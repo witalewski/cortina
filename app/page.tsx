@@ -10,8 +10,9 @@ import type { Note, MidiNote } from '@/app/types/music';
 export default function Home() {
   const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
   const [showMidiDevices, setShowMidiDevices] = useState(false);
+  const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
   
-  const { isInitialized, isInitializing, error, initialize, playNote, stopNote, setPreset, presetName, presets } = useAudio();
+  const { isInitialized, isInitializing, error, initialize, playNote, stopNote, setPreset, presetName, isLoadingPreset, presets } = useAudio();
 
   const handleNotePress = useCallback((note: Note | MidiNote, velocity?: number) => {
     playNote(note, velocity);
@@ -94,49 +95,12 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Status boxes in single row */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
                 <p className="text-green-700 dark:text-green-400 font-semibold">
                   ✓ Audio Engine Ready
                 </p>
-              </div>
-
-              <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <p className="text-blue-700 dark:text-blue-400 font-semibold mb-2">
-                  🎹 Preset: {presetName}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPreset(presets.WARM_PIANO_PRESET)}
-                    className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                      presetName === 'Warm Piano'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
-                    }`}
-                  >
-                    Warm Piano
-                  </button>
-                  <button
-                    onClick={() => setPreset(presets.BASIC_SYNTH_PRESET)}
-                    className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                      presetName === 'Basic Synth'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
-                    }`}
-                  >
-                    Basic Synth
-                  </button>
-                  <button
-                    onClick={() => setPreset(presets.ACID_BASS_PRESET)}
-                    className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                      presetName === 'Acid Bass'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
-                    }`}
-                  >
-                    Acid Bass
-                  </button>
-                </div>
               </div>
               
               <div className={`flex-1 rounded-lg border relative ${
@@ -190,6 +154,99 @@ export default function Home() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Instrument selector dropdown */}
+            <div className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">
+              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                🎹 Instrument
+              </label>
+              <div className="relative">
+                <button
+                  onClick={() => !isLoadingPreset && setShowInstrumentDropdown(!showInstrumentDropdown)}
+                  disabled={isLoadingPreset}
+                  className={`w-full px-4 py-2 text-left bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg font-medium ${
+                    isLoadingPreset 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-600 cursor-pointer'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-900 dark:text-zinc-100">
+                      {isLoadingPreset ? 'Loading...' : presetName}
+                    </span>
+                    <span className="text-zinc-500 dark:text-zinc-400">
+                      {isLoadingPreset ? '⟳' : '▼'}
+                    </span>
+                  </div>
+                </button>
+
+                {isLoadingPreset && (
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
+                    Loading samples (~3MB)...
+                  </p>
+                )}
+
+                {showInstrumentDropdown && !isLoadingPreset && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg shadow-lg z-50 overflow-hidden">
+                    <div className="p-2 border-b border-zinc-200 dark:border-zinc-600">
+                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 px-2">SYNTHS</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setPreset(presets.WARM_PIANO_PRESET);
+                        setShowInstrumentDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
+                        presetName === 'Warm Piano' ? 'bg-blue-100 dark:bg-blue-900/40 font-semibold' : ''
+                      }`}
+                    >
+                      <span className="text-zinc-900 dark:text-zinc-100">Warm Piano</span>
+                      {presetName === 'Warm Piano' && <span className="ml-2">✓</span>}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPreset(presets.BASIC_SYNTH_PRESET);
+                        setShowInstrumentDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
+                        presetName === 'Basic Synth' ? 'bg-blue-100 dark:bg-blue-900/40 font-semibold' : ''
+                      }`}
+                    >
+                      <span className="text-zinc-900 dark:text-zinc-100">Basic Synth</span>
+                      {presetName === 'Basic Synth' && <span className="ml-2">✓</span>}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setPreset(presets.ACID_BASS_PRESET);
+                        setShowInstrumentDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
+                        presetName === 'Acid Bass' ? 'bg-blue-100 dark:bg-blue-900/40 font-semibold' : ''
+                      }`}
+                    >
+                      <span className="text-zinc-900 dark:text-zinc-100">Acid Bass</span>
+                      {presetName === 'Acid Bass' && <span className="ml-2">✓</span>}
+                    </button>
+
+                    <div className="p-2 border-t border-zinc-200 dark:border-zinc-600">
+                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 px-2">SAMPLED</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setPreset(presets.SAMPLED_PIANO_PRESET);
+                        setShowInstrumentDropdown(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
+                        presetName === 'Sampled Piano' ? 'bg-blue-100 dark:bg-blue-900/40 font-semibold' : ''
+                      }`}
+                    >
+                      <span className="text-zinc-900 dark:text-zinc-100">Sampled Piano</span>
+                      {presetName === 'Sampled Piano' && <span className="ml-2">✓</span>}
+                    </button>
                   </div>
                 )}
               </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { audioEngine, WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, ACID_BASS_PRESET, type SynthPreset } from '@/app/services/audio';
+import { audioEngine, WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, ACID_BASS_PRESET, SAMPLED_PIANO_PRESET, type SynthPreset } from '@/app/services/audio';
 import type { Note, MidiNote } from '@/app/types/music';
 
 export function useAudio() {
@@ -9,6 +9,7 @@ export function useAudio() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [presetName, setPresetName] = useState(audioEngine.getPresetName());
+  const [isLoadingPreset, setIsLoadingPreset] = useState(false);
 
   const initialize = async () => {
     if (isInitialized || isInitializing) return true;
@@ -44,11 +45,14 @@ export function useAudio() {
   };
 
   const setPreset = async (preset: SynthPreset) => {
+    setIsLoadingPreset(true);
     try {
       await audioEngine.setPreset(preset);
       setPresetName(preset.name);
     } catch (err) {
       console.error('Failed to set preset:', err);
+    } finally {
+      setIsLoadingPreset(false);
     }
   };
 
@@ -65,10 +69,11 @@ export function useAudio() {
     isInitializing,
     error,
     presetName,
+    isLoadingPreset,
     initialize,
     playNote,
     stopNote,
     setPreset,
-    presets: { WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, ACID_BASS_PRESET },
+    presets: { WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, ACID_BASS_PRESET, SAMPLED_PIANO_PRESET },
   };
 }
