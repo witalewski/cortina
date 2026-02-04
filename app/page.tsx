@@ -9,6 +9,7 @@ import type { Note, MidiNote } from '@/app/types/music';
 
 export default function Home() {
   const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
+  const [showMidiDevices, setShowMidiDevices] = useState(false);
   
   const { isInitialized, isInitializing, error, initialize, playNote, stopNote } = useAudio();
 
@@ -100,51 +101,61 @@ export default function Home() {
                 </p>
               </div>
               
-              <div className={`flex-1 rounded-lg p-4 border ${
+              <div className={`flex-1 rounded-lg border ${
                 midiInitialized
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                   : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
               }`}>
-                <p className={`font-semibold ${
-                  midiInitialized
-                    ? 'text-green-700 dark:text-green-400'
-                    : 'text-amber-700 dark:text-amber-400'
-                }`}>
-                  {midiInitialized 
-                    ? `✓ MIDI: ${midiDevices.length} device(s)` 
-                    : `○ MIDI: ${midiSupported ? 'Not Connected' : 'Not Supported'}`
-                  }
-                </p>
-                {midiError && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                    {midiError}
+                <button
+                  onClick={() => midiInitialized && midiDevices.length > 0 && setShowMidiDevices(!showMidiDevices)}
+                  className={`w-full p-4 text-left ${midiInitialized && midiDevices.length > 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                >
+                  <p className={`font-semibold flex items-center justify-between ${
+                    midiInitialized
+                      ? 'text-green-700 dark:text-green-400'
+                      : 'text-amber-700 dark:text-amber-400'
+                  }`}>
+                    <span>
+                      {midiInitialized 
+                        ? `✓ MIDI: ${midiDevices.length} device(s)` 
+                        : `○ MIDI: ${midiSupported ? 'Not Connected' : 'Not Supported'}`
+                      }
+                    </span>
+                    {midiInitialized && midiDevices.length > 0 && (
+                      <span className="text-xs ml-2">
+                        {showMidiDevices ? '▲' : '▼'}
+                      </span>
+                    )}
                   </p>
-                )}
+                  {midiError && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                      {midiError}
+                    </p>
+                  )}
+                </button>
                 {!midiInitialized && midiSupported && (
-                  <button
-                    onClick={initializeMidi}
-                    className="mt-2 text-xs px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded"
-                  >
-                    Connect MIDI
-                  </button>
+                  <div className="px-4 pb-4">
+                    <button
+                      onClick={initializeMidi}
+                      className="text-xs px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded"
+                    >
+                      Connect MIDI
+                    </button>
+                  </div>
+                )}
+                {showMidiDevices && midiDevices.length > 0 && (
+                  <div className="px-4 pb-4 pt-0 border-t border-green-200 dark:border-green-800">
+                    <ul className="mt-2 space-y-1">
+                      {midiDevices.map(device => (
+                        <li key={device.id} className="text-xs text-green-600 dark:text-green-400">
+                          • {device.name} {device.manufacturer && `(${device.manufacturer})`}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             </div>
-
-            {midiInitialized && midiDevices.length > 0 && (
-              <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                  Connected MIDI Devices:
-                </h3>
-                <ul className="space-y-1">
-                  {midiDevices.map(device => (
-                    <li key={device.id} className="text-sm text-zinc-600 dark:text-zinc-400">
-                      • {device.name} {device.manufacturer && `(${device.manufacturer})`}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             <div className="flex justify-center py-8">
               <PianoKeyboard
