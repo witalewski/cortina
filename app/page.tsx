@@ -144,7 +144,7 @@ export default function Home() {
                   </div>
                 )}
                 {showMidiDevices && midiDevices.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-green-50 dark:bg-green-900/95 border border-green-200 dark:border-green-800 rounded-lg shadow-lg z-10 p-4">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-green-50 dark:bg-green-900/95 border border-green-200 dark:border-green-800 rounded-lg shadow-lg z-50 p-4">
                     <ul className="space-y-1">
                       {midiDevices.map(device => (
                         <li key={device.id} className="text-xs text-green-600 dark:text-green-400">
