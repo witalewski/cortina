@@ -2,14 +2,14 @@ import * as Tone from 'tone';
 import type { Note, MidiNote } from '@/app/types/music';
 import { midiToNote, noteToMidi } from '@/app/utils/music';
 import type { SynthPreset } from './types';
-import { WARM_PIANO_PRESET } from './presets';
+import { SAMPLED_PIANO_PRESET } from './presets';
 
 export class AudioEngine {
   private synth: Tone.PolySynth | Tone.Sampler | null = null;
   private filter: Tone.Filter | null = null;
   private reverb: Tone.Reverb | null = null;
   private initialized = false;
-  private currentPreset: SynthPreset = WARM_PIANO_PRESET;
+  private currentPreset: SynthPreset = SAMPLED_PIANO_PRESET;
   private isLoadingPreset = false;
 
   private createSynth(preset: SynthPreset): Tone.PolySynth | Tone.Sampler {

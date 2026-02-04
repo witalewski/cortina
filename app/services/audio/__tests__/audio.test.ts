@@ -81,12 +81,12 @@ describe('AudioEngine', () => {
       const Tone = require('tone');
       
       // Clear the beforeEach mock call
-      Tone.PolySynth.mockClear();
+      Tone.Sampler.mockClear();
       
       await audioEngine.initialize();
 
       expect(Tone.start).toHaveBeenCalledTimes(1);
-      expect(Tone.PolySynth).toHaveBeenCalledTimes(1);
+      expect(Tone.Sampler).toHaveBeenCalledTimes(1);
       expect(audioEngine.isInitialized()).toBe(true);
     });
 
@@ -95,13 +95,13 @@ describe('AudioEngine', () => {
       const Tone = require('tone');
       
       // Clear the beforeEach mock call
-      Tone.PolySynth.mockClear();
+      Tone.Sampler.mockClear();
       
       await audioEngine.initialize();
       await audioEngine.initialize();
 
       expect(Tone.start).toHaveBeenCalledTimes(1);
-      expect(Tone.PolySynth).toHaveBeenCalledTimes(1);
+      expect(Tone.Sampler).toHaveBeenCalledTimes(1);
     });
 
     it('should return running context state', () => {

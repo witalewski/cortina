@@ -9,7 +9,7 @@ jest.mock('@/app/services/audio', () => ({
     noteOn: jest.fn(),
     noteOff: jest.fn(),
     setPreset: jest.fn(),
-    getPresetName: jest.fn(() => 'Warm Piano'),
+    getPresetName: jest.fn(() => 'Sampled Piano'),
     dispose: jest.fn(),
   },
   WARM_PIANO_PRESET: { name: 'Warm Piano', synthType: 'fm' },
@@ -41,7 +41,7 @@ describe('useAudio', () => {
     expect(result.current.isInitialized).toBe(false);
     expect(result.current.isInitializing).toBe(false);
     expect(result.current.error).toBe(null);
-    expect(result.current.presetName).toBe('Warm Piano');
+    expect(result.current.presetName).toBe('Sampled Piano');
     expect(result.current.isLoadingPreset).toBe(false);
   });
 
