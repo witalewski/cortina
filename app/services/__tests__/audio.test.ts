@@ -1,4 +1,4 @@
-import { audioEngine } from '../audio';
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports */
 
 // Mock Tone.js
 jest.mock('tone', () => {
@@ -22,26 +22,32 @@ jest.mock('tone', () => {
 });
 
 describe('AudioEngine', () => {
-  let Tone: any;
   let mockSynth: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetModules();
-    Tone = require('tone');
+    
     // Reset the singleton instance
     const { audioEngine } = require('../audio');
     (audioEngine as any).synth = null;
     (audioEngine as any).initialized = false;
+    
+    // Get fresh mockSynth reference
+    const Tone = require('tone');
+    mockSynth = new Tone.PolySynth();
   });
 
   describe('initialize', () => {
     it('should start Tone.js and create synth', async () => {
       const { audioEngine } = require('../audio');
+      const Tone = require('tone');
+      
+      // Clear the beforeEach mock call
+      Tone.PolySynth.mockClear();
       
       await audioEngine.initialize();
 
-      const Tone = require('tone');
       expect(Tone.start).toHaveBeenCalledTimes(1);
       expect(Tone.PolySynth).toHaveBeenCalledTimes(1);
       expect(audioEngine.isInitialized()).toBe(true);
@@ -49,11 +55,14 @@ describe('AudioEngine', () => {
 
     it('should not reinitialize if already initialized', async () => {
       const { audioEngine } = require('../audio');
+      const Tone = require('tone');
+      
+      // Clear the beforeEach mock call
+      Tone.PolySynth.mockClear();
       
       await audioEngine.initialize();
       await audioEngine.initialize();
 
-      const Tone = require('tone');
       expect(Tone.start).toHaveBeenCalledTimes(1);
       expect(Tone.PolySynth).toHaveBeenCalledTimes(1);
     });

@@ -73,9 +73,8 @@ export function PianoKeyboard({
     keys.push({ note, midiNote, color, label });
   }
 
-  // Separate white and black keys for proper layering
+  // Separate white keys for rendering
   const whiteKeys = keys.filter(k => k.color === 'white');
-  const blackKeys = keys.filter(k => k.color === 'black');
 
   return (
     <div className="relative inline-flex items-start">
@@ -96,7 +95,7 @@ export function PianoKeyboard({
 
       {/* Black keys - positioned absolutely */}
       <div className="absolute top-0 left-0 flex pointer-events-none">
-        {keys.map(({ note, midiNote, color }, index) => {
+        {keys.map(({ note, color }, index) => {
           if (color === 'black') {
             // Calculate position based on white keys before this black key
             const whiteKeysBefore = keys.slice(0, index).filter(k => k.color === 'white').length;

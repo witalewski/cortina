@@ -100,6 +100,8 @@ class MidiService {
     // Listen for device connections/disconnections
     this.access.onstatechange = (e) => {
       const event = e as MIDIConnectionEvent;
+      if (!event.port) return;
+      
       if (event.port.type === 'input') {
         if (event.port.state === 'connected') {
           console.log('MIDI device connected:', event.port.name);
@@ -114,6 +116,8 @@ class MidiService {
   }
 
   private handleMidiMessage(event: MIDIMessageEvent): void {
+    if (!event.data || event.data.length < 3) return;
+    
     const [status, note, velocity] = event.data;
     const command = status & 0xf0;
 

@@ -164,7 +164,7 @@ export default function Home() {
               <div className="flex justify-center gap-8 mt-2 text-xs font-mono">
                 <div>
                   <p className="text-zinc-500 dark:text-zinc-500 mb-1">White keys</p>
-                  <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">A S D F G H J K L ; '</p>
+                  <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">A S D F G H J K L ; &apos;</p>
                 </div>
                 <div>
                   <p className="text-zinc-500 dark:text-zinc-500 mb-1">Black keys</p>

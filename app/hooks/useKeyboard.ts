@@ -105,11 +105,21 @@ export function useKeyboard({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      
-      // Clear all pressed keys on unmount
-      pressedKeysRef.current.clear();
     };
   }, [enabled, handleKeyDown, handleKeyUp]);
+
+  // Clear pressed keys on unmount or when disabled
+  useEffect(() => {
+    const keysRef = pressedKeysRef;
+    
+    if (!enabled) {
+      keysRef.current.clear();
+    }
+    
+    return () => {
+      keysRef.current.clear();
+    };
+  }, [enabled]);
 
   // Clear pressed keys when losing focus
   useEffect(() => {
