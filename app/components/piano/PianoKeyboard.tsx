@@ -11,6 +11,7 @@ interface PianoKeyboardProps {
   onNotePress?: (note: Note) => void;
   onNoteRelease?: (note: Note) => void;
   pressedNotes?: Set<Note>;
+  rotateForMobile?: boolean;
 }
 
 interface KeyInfo {
@@ -31,6 +32,7 @@ export function PianoKeyboard({
   onNotePress,
   onNoteRelease,
   pressedNotes: externalPressedNotes,
+  rotateForMobile = false, // Rotate 90° for portrait mobile
 }: PianoKeyboardProps) {
   const [internalPressedNotes, setInternalPressedNotes] = useState<Set<Note>>(new Set());
   
@@ -70,8 +72,20 @@ export function PianoKeyboard({
   // Separate white keys for rendering
   const whiteKeys = keys.filter(k => k.color === 'white');
 
+  // Calculate keyboard dimensions for rotation
+  const keyboardWidth = whiteKeys.length * 48; // 48px per white key (w-12)
+  const keyboardHeight = 160; // approximate height of white keys
+
   return (
-    <div className="relative inline-flex items-start">
+    <div 
+      className={`relative inline-flex items-start ${rotateForMobile ? 'origin-center' : ''}`}
+      style={rotateForMobile ? {
+        transform: 'rotate(90deg)',
+        // Swap width/height in the layout so it fits vertically
+        width: `${keyboardHeight}px`,
+        height: `${keyboardWidth}px`,
+      } : undefined}
+    >
       {/* White keys */}
       <div className="flex">
         {whiteKeys.map(({ note, color, label }) => (

@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useAudio } from '@/app/hooks/useAudio';
 import { useMidi } from '@/app/hooks/useMidi';
 import { useKeyboard } from '@/app/hooks/useKeyboard';
+import { useMobilePortrait } from '@/app/hooks/useMobilePortrait';
 import { PianoKeyboard } from '@/app/components/piano';
 import { StatusIndicator } from '@/app/components/ui/StatusIndicator';
 import { InstrumentSelector } from '@/app/components/ui/InstrumentSelector';
@@ -14,6 +15,7 @@ export default function Home() {
   const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
   const [startNote, setStartNote] = useState<MidiNote>(48); // Default: C3
   const lastMidiNoteSource = useRef<'midi' | 'other'>('other');
+  const isMobilePortrait = useMobilePortrait();
   
   const { isInitialized, isInitializing, error, initialize, playNote, stopNote, setPreset, presetName, isLoadingPreset, presets } = useAudio();
 
@@ -133,36 +135,47 @@ export default function Home() {
               />
             </div>
 
-            <div className="space-y-8">
-              <div className="flex justify-center">
+            <div className={`space-y-8 ${isMobilePortrait ? 'flex flex-col items-center justify-center min-h-[60vh]' : ''}`}>
+              <div className="flex justify-center items-center">
                 <PianoKeyboard
                   startNote={startNote}
                   numKeys={25}
                   onNotePress={handleLocalNotePress}
                   onNoteRelease={handleNoteRelease}
                   pressedNotes={pressedNotes}
+                  rotateForMobile={isMobilePortrait}
                 />
               </div>
 
-              <div className="text-center text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
-                <p className="font-semibold">How to Play:</p>
-                <p>🖱️ Click piano keys with your mouse</p>
-                {midiInitialized && <p>🎹 Play with your MIDI keyboard</p>}
-                <p>⌨️ Use computer keyboard:</p>
-                <div className="flex justify-center gap-8 mt-2 text-xs font-mono">
-                  <div>
-                    <p className="text-zinc-500 dark:text-zinc-500 mb-1">White keys</p>
-                    <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">A S D F G H J K L ; &apos;</p>
+              {/* Hide computer keyboard instructions on mobile portrait */}
+              {!isMobilePortrait && (
+                <div className="text-center text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
+                  <p className="font-semibold">How to Play:</p>
+                  <p>🖱️ Click piano keys with your mouse</p>
+                  {midiInitialized && <p>🎹 Play with your MIDI keyboard</p>}
+                  <p>⌨️ Use computer keyboard:</p>
+                  <div className="flex justify-center gap-8 mt-2 text-xs font-mono">
+                    <div>
+                      <p className="text-zinc-500 dark:text-zinc-500 mb-1">White keys</p>
+                      <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">A S D F G H J K L ; &apos;</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 dark:text-zinc-500 mb-1">Black keys</p>
+                      <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">W E T Y U O P [</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-zinc-500 dark:text-zinc-500 mb-1">Black keys</p>
-                    <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">W E T Y U O P [</p>
-                  </div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
+                    Range: {midiToNote(startNote)} to {midiToNote((startNote + 24) as MidiNote)}
+                  </p>
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
-                  Range: {midiToNote(startNote)} to {midiToNote((startNote + 24) as MidiNote)}
-                </p>
-              </div>
+              )}
+
+              {/* Simplified mobile instructions */}
+              {isMobilePortrait && (
+                <div className="text-center text-xs text-zinc-500 dark:text-zinc-500">
+                  <p>Tap keys to play • Range: {midiToNote(startNote)} - {midiToNote((startNote + 24) as MidiNote)}</p>
+                </div>
+              )}
             </div>
           </>
         )}
