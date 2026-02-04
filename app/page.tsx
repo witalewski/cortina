@@ -5,13 +5,14 @@ import { useAudio } from '@/app/hooks/useAudio';
 import { useMidi } from '@/app/hooks/useMidi';
 import { useKeyboard } from '@/app/hooks/useKeyboard';
 import { PianoKeyboard } from '@/app/components/piano';
+import { StatusBadge } from '@/app/components/ui/StatusBadge';
+import { MidiStatusBadge } from '@/app/components/ui/MidiStatusBadge';
+import { InstrumentSelector } from '@/app/components/ui/InstrumentSelector';
 import { midiToNote } from '@/app/utils/music';
 import type { Note, MidiNote } from '@/app/types/music';
 
 export default function Home() {
   const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
-  const [showMidiDevices, setShowMidiDevices] = useState(false);
-  const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
   
   const { isInitialized, isInitializing, error, initialize, playNote, stopNote, setPreset, presetName, isLoadingPreset, presets } = useAudio();
 
@@ -94,160 +95,32 @@ export default function Home() {
           <div className="space-y-6">
             {/* Status boxes in single row */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                <p className="text-green-700 dark:text-green-400 font-semibold">
-                  ✓ Audio Engine Ready
-                </p>
-              </div>
+              <StatusBadge 
+                status="success" 
+                label="Audio Engine Ready" 
+              />
               
-              <div className={`flex-1 rounded-lg border relative ${
-                midiInitialized
-                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-              }`}>
-                <button
-                  onClick={() => midiInitialized && midiDevices.length > 0 && setShowMidiDevices(!showMidiDevices)}
-                  className={`w-full p-4 text-left ${midiInitialized && midiDevices.length > 0 ? 'cursor-pointer' : 'cursor-default'}`}
-                >
-                  <p className={`font-semibold flex items-center justify-between ${
-                    midiInitialized
-                      ? 'text-green-700 dark:text-green-400'
-                      : 'text-amber-700 dark:text-amber-400'
-                  }`}>
-                    <span>
-                      {midiInitialized 
-                        ? `✓ MIDI: ${midiDevices.length} ${midiDevices.length === 1 ? 'device' : 'devices'}` 
-                        : `○ MIDI: ${midiSupported ? 'Not Connected' : 'Not Supported'}`
-                      }
-                    </span>
-                    {midiInitialized && midiDevices.length > 0 && (
-                      <span className="text-xs ml-2">
-                        {showMidiDevices ? '▲' : '▼'}
-                      </span>
-                    )}
-                  </p>
-                  {midiError && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                      {midiError}
-                    </p>
-                  )}
-                </button>
-                {!midiInitialized && midiSupported && (
-                  <div className="px-4 pb-4">
-                    <button
-                      onClick={initializeMidi}
-                      className="text-xs px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded"
-                    >
-                      Connect MIDI
-                    </button>
-                  </div>
-                )}
-                {showMidiDevices && midiDevices.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-green-50 dark:bg-green-900/95 border border-green-200 dark:border-green-800 rounded-lg shadow-lg z-50 p-4">
-                    <ul className="space-y-1">
-                      {midiDevices.map(device => (
-                        <li key={device.id} className="text-xs text-green-600 dark:text-green-400">
-                          • {device.name} {device.manufacturer && `(${device.manufacturer})`}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+              <MidiStatusBadge
+                isInitialized={midiInitialized}
+                isSupported={midiSupported}
+                devices={midiDevices}
+                error={midiError}
+                onConnect={initializeMidi}
+              />
             </div>
 
             {/* Instrument selector dropdown */}
-            <div className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">
-              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
-                🎹 Instrument
-              </label>
-              <div className="relative">
-                <button
-                  onClick={() => !isLoadingPreset && setShowInstrumentDropdown(!showInstrumentDropdown)}
-                  disabled={isLoadingPreset}
-                  className={`w-full px-4 py-2 text-left bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg font-medium ${
-                    isLoadingPreset 
-                      ? 'opacity-50 cursor-not-allowed' 
-                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-600 cursor-pointer'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-zinc-900 dark:text-zinc-100">
-                      {isLoadingPreset ? 'Loading...' : presetName}
-                    </span>
-                    <span className="text-zinc-500 dark:text-zinc-400">
-                      {isLoadingPreset ? '⟳' : '▼'}
-                    </span>
-                  </div>
-                </button>
-
-                {isLoadingPreset && (
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-                    Loading samples (~3MB)...
-                  </p>
-                )}
-
-                {showInstrumentDropdown && !isLoadingPreset && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg shadow-lg z-50 overflow-hidden">
-                    <div className="p-2 border-b border-zinc-200 dark:border-zinc-600">
-                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 px-2">SYNTHS</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setPreset(presets.WARM_PIANO_PRESET);
-                        setShowInstrumentDropdown(false);
-                      }}
-                      className={`w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
-                        presetName === 'Warm Piano' ? 'bg-blue-100 dark:bg-blue-900/40 font-semibold' : ''
-                      }`}
-                    >
-                      <span className="text-zinc-900 dark:text-zinc-100">Warm Piano</span>
-                      {presetName === 'Warm Piano' && <span className="ml-2">✓</span>}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPreset(presets.BASIC_SYNTH_PRESET);
-                        setShowInstrumentDropdown(false);
-                      }}
-                      className={`w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
-                        presetName === 'Basic Synth' ? 'bg-blue-100 dark:bg-blue-900/40 font-semibold' : ''
-                      }`}
-                    >
-                      <span className="text-zinc-900 dark:text-zinc-100">Basic Synth</span>
-                      {presetName === 'Basic Synth' && <span className="ml-2">✓</span>}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPreset(presets.ACID_BASS_PRESET);
-                        setShowInstrumentDropdown(false);
-                      }}
-                      className={`w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
-                        presetName === 'Acid Bass' ? 'bg-blue-100 dark:bg-blue-900/40 font-semibold' : ''
-                      }`}
-                    >
-                      <span className="text-zinc-900 dark:text-zinc-100">Acid Bass</span>
-                      {presetName === 'Acid Bass' && <span className="ml-2">✓</span>}
-                    </button>
-
-                    <div className="p-2 border-t border-zinc-200 dark:border-zinc-600">
-                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 px-2">SAMPLED</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setPreset(presets.SAMPLED_PIANO_PRESET);
-                        setShowInstrumentDropdown(false);
-                      }}
-                      className={`w-full px-4 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
-                        presetName === 'Sampled Piano' ? 'bg-blue-100 dark:bg-blue-900/40 font-semibold' : ''
-                      }`}
-                    >
-                      <span className="text-zinc-900 dark:text-zinc-100">Sampled Piano</span>
-                      {presetName === 'Sampled Piano' && <span className="ml-2">✓</span>}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <InstrumentSelector
+              currentPresetName={presetName}
+              isLoading={isLoadingPreset}
+              presets={[
+                { preset: presets.WARM_PIANO_PRESET, category: 'synth' },
+                { preset: presets.BASIC_SYNTH_PRESET, category: 'synth' },
+                { preset: presets.ACID_BASS_PRESET, category: 'synth' },
+                { preset: presets.SAMPLED_PIANO_PRESET, category: 'sampled' },
+              ]}
+              onPresetChange={setPreset}
+            />
 
             <div className="flex justify-center py-8">
               <PianoKeyboard
