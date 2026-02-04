@@ -19,8 +19,16 @@ jest.mock('tone', () => {
     dispose: jest.fn(),
   };
 
+  const mockReverb = {
+    wet: { value: 0 },
+    connect: jest.fn().mockReturnThis(),
+    toDestination: jest.fn().mockReturnThis(),
+    dispose: jest.fn(),
+  };
+
   const mockPolySynth = jest.fn(() => mockSynth);
   const mockFilterConstructor = jest.fn(() => mockFilter);
+  const mockReverbConstructor = jest.fn(() => mockReverb);
 
   return {
     start: jest.fn().mockResolvedValue(undefined),
@@ -29,6 +37,7 @@ jest.mock('tone', () => {
     Synth: jest.fn(),
     FMSynth: jest.fn(),
     Filter: mockFilterConstructor,
+    Reverb: mockReverbConstructor,
     context: {
       state: 'running',
     },

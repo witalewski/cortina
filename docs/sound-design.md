@@ -65,11 +65,12 @@ As of initial implementation:
 **Status**: ✅ Complete
 
 ### Phase 5: Add Room Ambience (spatial realism)
-- [ ] Add `Tone.Reverb` with subtle settings (decay ~1.5s, wet ~0.2)
-- [ ] This simulates piano in a room rather than "in your head"
-- [ ] Keep it subtle to avoid muddiness
+- [x] Add `Tone.Reverb` with subtle settings (decay 1.5s, wet 0.2)
+- [x] Simulate piano in a room rather than "in your head"
+- [x] Keep it subtle to avoid muddiness
 
 **Expected result**: Sound sits in a space, less "sterile"
+**Status**: ✅ Complete
 
 ### Phase 6: Refactor for Extensibility
 - [ ] Extract synth configuration into a `SynthPreset` type
@@ -152,3 +153,4 @@ This allows adding `@tonejs/piano` (Salamander Grand Piano samples) as an altern
 | 2026-02-04 | Phase 2 | Added velocity support: keyboard input passes velocity (0.7 default), MIDI velocity normalized 0-127→0-1 |
 | 2026-02-04 | Phase 3 | Added lowpass filter + velocity-dependent cutoff: 1500Hz base + (velocity × 3000Hz) - warmer base, brighter when played harder |
 | 2026-02-04 | Phase 4 | Switched to FMSynth: harmonicity 2, modulationIndex 10, with modulationEnvelope - richer, more complex harmonics |
+| 2026-02-04 | Phase 5 | Added reverb: decay 1.5s, wet 0.2 - spatial realism, sound sits in a room |

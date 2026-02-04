@@ -4,6 +4,7 @@ import type { Note, MidiNote } from '@/app/types/music';
 class AudioEngine {
   private synth: Tone.PolySynth | null = null;
   private filter: Tone.Filter | null = null;
+  private reverb: Tone.Reverb | null = null;
   private initialized = false;
 
   async initialize(): Promise<void> {
@@ -17,6 +18,12 @@ class AudioEngine {
       frequency: 3000, // Will be modulated per-note by velocity
       Q: 1,
       rolloff: -24
+    });
+
+    // Create reverb for spatial realism
+    this.reverb = new Tone.Reverb({
+      decay: 1.5,
+      preDelay: 0.01
     });
 
     this.synth = new Tone.PolySynth(Tone.FMSynth, {
@@ -42,13 +49,20 @@ class AudioEngine {
       }
     }).connect(this.filter);
 
+    // Signal chain: Synth → Filter → Reverb (wet 0.2) → Destination
+    this.filter.connect(this.reverb);
+    this.reverb.toDestination();
+    // Also send dry signal to destination
     this.filter.toDestination();
+    
+    // Set reverb wet/dry mix (20% wet)
+    this.reverb.wet.value = 0.2;
 
     this.initialized = true;
   }
 
   noteOn(note: Note | MidiNote, velocity: number = 0.8): void {
-    if (!this.synth || !this.filter) {
+    if (!this.synth || !this.filter || !this.reverb) {
       console.warn('Audio engine not initialized');
       return;
     }
@@ -66,7 +80,7 @@ class AudioEngine {
   }
 
   noteOff(note: Note | MidiNote): void {
-    if (!this.synth || !this.filter) {
+    if (!this.synth || !this.filter || !this.reverb) {
       console.warn('Audio engine not initialized');
       return;
     }
@@ -93,8 +107,10 @@ class AudioEngine {
   dispose(): void {
     this.synth?.dispose();
     this.filter?.dispose();
+    this.reverb?.dispose();
     this.synth = null;
     this.filter = null;
+    this.reverb = null;
     this.initialized = false;
   }
 }
