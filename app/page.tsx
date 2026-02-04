@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useAudio } from '@/app/hooks/useAudio';
 import { useMidi } from '@/app/hooks/useMidi';
+import { useKeyboard } from '@/app/hooks/useKeyboard';
 import { PianoKeyboard } from '@/app/components/piano';
 import type { Note, MidiNote } from '@/app/types/music';
 
@@ -38,6 +39,13 @@ export default function Home() {
     onNoteOn: handleNotePress,
     onNoteOff: handleNoteRelease,
     autoEnable: true,
+  });
+
+  // Computer keyboard input
+  useKeyboard({
+    onNoteOn: handleNotePress,
+    onNoteOff: handleNoteRelease,
+    enabled: isInitialized,
   });
 
   const handleStartClick = async () => {
@@ -148,12 +156,24 @@ export default function Home() {
               />
             </div>
 
-            <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-              <p>Click the piano keys to play notes</p>
-              {midiInitialized && (
-                <p className="mt-1">Or use your MIDI keyboard</p>
-              )}
-              <p className="mt-1">25 keys from C3 to C5</p>
+            <div className="text-center text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
+              <p className="font-semibold">How to Play:</p>
+              <p>🖱️ Click piano keys with your mouse</p>
+              {midiInitialized && <p>🎹 Play with your MIDI keyboard</p>}
+              <p>⌨️ Use computer keyboard:</p>
+              <div className="flex justify-center gap-8 mt-2 text-xs font-mono">
+                <div>
+                  <p className="text-zinc-500 dark:text-zinc-500 mb-1">White keys</p>
+                  <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">A S D F G H J K L ; '</p>
+                </div>
+                <div>
+                  <p className="text-zinc-500 dark:text-zinc-500 mb-1">Black keys</p>
+                  <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">W E T Y U O P [</p>
+                </div>
+              </div>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
+                Range: C3 to C5 (25 keys)
+              </p>
             </div>
           </div>
         )}
