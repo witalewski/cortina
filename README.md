@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cortina 🎹
+
+A web-based musical skills training application featuring an in-browser synthesizer with piano keyboard visualization, controllable via MIDI devices and computer keyboard.
+
+## Features
+
+- 🎹 **Interactive Piano Keyboard** - 25-key visual piano interface (C3-C5)
+- 🎵 **Web Audio Synthesis** - High-quality audio using Tone.js
+- 🎛️ **MIDI Device Support** - Connect and play with physical MIDI keyboards
+- ⌨️ **Computer Keyboard Input** - Play notes using your keyboard
+- 🎨 **Modern UI** - Responsive design with Tailwind CSS
+
+## Tech Stack
+
+- **Framework**: Next.js 16 with App Router
+- **UI**: React 19 + TypeScript
+- **Styling**: Tailwind CSS 4
+- **Audio**: Tone.js
+- **MIDI**: Web MIDI API
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 20+ (LTS recommended)
+- Modern browser with Web Audio support (Chrome/Edge recommended for MIDI)
+
+### Installation
+
+```bash
+npm install
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+### Linting
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run lint
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Browser Support
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Audio**: All modern browsers (Chrome, Firefox, Safari, Edge)
+- **MIDI**: Chrome, Edge (best support), Firefox (partial), Safari (not supported)
 
-## Deploy on Vercel
+## Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+For AI coding assistants, see [AGENTS.md](./AGENTS.md) for architecture and patterns.
+
+## License
+
+MIT
