@@ -117,7 +117,7 @@ export default function Home() {
                   }`}>
                     <span>
                       {midiInitialized 
-                        ? `✓ MIDI: ${midiDevices.length} device(s)` 
+                        ? `✓ MIDI: ${midiDevices.length} ${midiDevices.length === 1 ? 'device' : 'devices'}` 
                         : `○ MIDI: ${midiSupported ? 'Not Connected' : 'Not Supported'}`
                       }
                     </span>
