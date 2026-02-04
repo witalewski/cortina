@@ -25,16 +25,19 @@ audioEngine.getContextState();      // 'running' | 'suspended'
 audioEngine.dispose();
 ```
 
-**SynthPreset Interface:**
+**SynthPreset Types:**
 ```typescript
-interface SynthPreset {
+type SynthPreset = FMSynthPreset | MonoSynthPreset;
+
+interface FMSynthPreset {
   name: string;
+  synthType: 'fm';
   synth: {
     harmonicity: number;
     modulationIndex: number;
-    oscillator: { type: string };
+    oscillator: { type: 'sine' | 'square' | 'sawtooth' | 'triangle' };
     envelope: { attack, decay, sustain, release };
-    modulation: { type: string };
+    modulation: { type: 'sine' | 'square' | 'sawtooth' | 'triangle' };
     modulationEnvelope: { attack, decay, sustain, release };
   };
   filter: {
@@ -54,9 +57,49 @@ interface SynthPreset {
     wet: number;
   };
 }
+
+interface MonoSynthPreset {
+  name: string;
+  synthType: 'mono';
+  synth: {
+    oscillator: { type: 'sine' | 'square' | 'sawtooth' | 'triangle' };
+    envelope: { attack, decay, sustain, release };
+  };
+  filter: {
+    type: 'lowpass' | 'highpass' | 'bandpass';
+    frequency: number;
+    Q: number;
+    rolloff: -12 | -24 | -48 | -96;
+  };
+  filterEnvelope: {
+    attack: number;
+    decay: number;
+    sustain: number;
+    release: number;
+    baseFrequency: number;  // Hz - starting filter cutoff
+    octaves: number;        // Range to sweep (in octaves)
+  };
+  filterMapping: {
+    velocityOctaveBoost: number;  // Velocity increases envelope sweep
+  };
+  reverb: {
+    decay: number;
+    preDelay: number;
+    wet: number;
+  };
+}
 ```
 
-**Current Preset:** `WARM_PIANO_PRESET` - Optimized for warm, expressive piano sound with velocity-dependent brightness and frequency-aware filtering.
+**Available Presets:**
+- `WARM_PIANO_PRESET` (FMSynthPreset) - Rich, expressive piano sound
+- `BASIC_SYNTH_PRESET` (FMSynthPreset) - Simple, bright synthesizer
+- `ACID_BASS_PRESET` (MonoSynthPreset) - TB-303-inspired squelchy bass
+
+**Preset Switching:**
+```typescript
+audioEngine.setPreset(ACID_BASS_PRESET);
+audioEngine.getPresetName(); // "Acid Bass"
+```
 
 ### `midiService` (midi.ts)
 
