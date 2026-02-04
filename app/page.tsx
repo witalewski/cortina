@@ -52,15 +52,11 @@ export default function Home() {
   });
 
   const handleStartClick = async () => {
-    console.log('handleStartClick: Starting...');
     const audioSuccess = await initialize();
-    console.log('handleStartClick: Audio initialized:', audioSuccess);
     
     if (audioSuccess) {
-      console.log('handleStartClick: Attempting MIDI initialization...');
       // Always try to initialize MIDI if the browser might support it
-      const midiSuccess = await initializeMidi();
-      console.log('handleStartClick: MIDI initialized:', midiSuccess);
+      await initializeMidi();
     }
   };
 

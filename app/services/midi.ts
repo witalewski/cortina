@@ -29,9 +29,7 @@ class MidiService {
     }
 
     try {
-      console.log('MidiService: Requesting MIDI access (this should show permission prompt)...');
       this.access = await navigator.requestMIDIAccess();
-      console.log('MidiService: MIDI access granted');
       this.setupInputListeners();
       return true;
     } catch (error) {
@@ -122,13 +120,11 @@ class MidiService {
       
       if (event.port.type === 'input') {
         if (event.port.state === 'connected') {
-          console.log('MIDI device connected:', event.port.name);
           // Auto-enable new devices
           this.enableDevice(event.port.id);
           // Notify listeners of device change
           this.notifyDeviceChange();
         } else if (event.port.state === 'disconnected') {
-          console.log('MIDI device disconnected:', event.port.name);
           this.activeInputs.delete(event.port.id);
           // Notify listeners of device change
           this.notifyDeviceChange();

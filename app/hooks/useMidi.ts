@@ -17,30 +17,23 @@ export function useMidi({ onNoteOn, onNoteOff, autoEnable = true }: UseMidiOptio
   const [error, setError] = useState<string | null>(null);
 
   const initialize = useCallback(async () => {
-    console.log('useMidi: Starting initialization...');
-    
     if (!midiService.isSupported()) {
       console.warn('useMidi: Web MIDI API not supported');
       setError('Web MIDI API not supported in this browser. Try Chrome or Edge.');
       return false;
     }
 
-    console.log('useMidi: Web MIDI API is supported');
     setIsSupported(true);
 
     try {
-      console.log('useMidi: Requesting MIDI access...');
       const success = await midiService.initialize();
-      console.log('useMidi: Initialize result:', success);
       
       if (success) {
         setIsInitialized(true);
         const deviceList = midiService.getDevices();
-        console.log('useMidi: Found devices:', deviceList);
         setDevices(deviceList);
         
         if (autoEnable) {
-          console.log('useMidi: Auto-enabling all devices');
           midiService.enableAllDevices();
         }
         
