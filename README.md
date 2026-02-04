@@ -5,10 +5,11 @@ A web-based musical skills training application featuring an in-browser synthesi
 ## Features
 
 - 🎹 **Interactive Piano Keyboard** - 25-key visual piano interface (C3-C5)
-- 🎵 **Web Audio Synthesis** - High-quality audio using Tone.js
+- 🎵 **Multiple Instruments** - Sampled piano (default), FM synth, basic synth, and acid bass
 - 🎛️ **MIDI Device Support** - Connect and play with physical MIDI keyboards
 - ⌨️ **Computer Keyboard Input** - Play notes using your keyboard
 - 🎨 **Modern UI** - Responsive design with Tailwind CSS
+- 🎚️ **Velocity Sensitive** - Dynamic expression via MIDI velocity or keyboard defaults
 
 ## Tech Stack
 

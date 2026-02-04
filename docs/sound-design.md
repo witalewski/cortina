@@ -20,9 +20,38 @@ The synthesizer supports multiple sound sources through a preset system:
 
 Each preset specifies its source type and configuration, allowing diverse sound palettes within one engine.
 
+## Default Instrument
+
+**Sampled Piano** is the default instrument, providing realistic acoustic piano sound immediately on load. The samples (~3MB) download automatically when the audio engine initializes, and are cached by the browser for subsequent visits.
+
 ## Presets
 
-### 1. Warm Piano (FMSynth)
+### 1. Sampled Piano (Sampler) - DEFAULT
+
+**Goal:** Realistic acoustic piano sound using actual piano recordings.
+
+**Signal Chain:**
+```
+Sampled Piano (18 samples) → Subtle Filter → Moderate Reverb → Output
+```
+
+**Key Features:**
+- Real piano samples from tonejs-instrument-piano-mp3 CDN
+- 18 strategically placed samples (C, E, G across 6 octaves)
+- Tone.js pitch-shifts between sampled notes for seamless playback
+- ~3MB download size, browser-cached
+- Minimal processing preserves natural piano sound
+- Single-velocity layer with velocity response
+
+**Why It Works:**
+- Authentic piano timbre and resonance
+- Natural attack and decay characteristics
+- Realistic sustain and release
+- Browser caching eliminates repeated downloads
+
+### 2. Warm Piano (FMSynth)
+
+**Goal:** Piano-like warmth and expressiveness using synthesis.
 
 **Goal:** Piano-like warmth and expressiveness without sample-based emulation.
 
