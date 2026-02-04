@@ -1,5 +1,6 @@
 import * as Tone from 'tone';
 import type { Note, MidiNote } from '@/app/types/music';
+import { midiToNote, noteToMidi } from '@/app/utils/music';
 
 // Base synth preset configuration
 interface BaseSynthPreset {
@@ -337,7 +338,7 @@ class AudioEngine {
       return;
     }
 
-    const noteStr = typeof note === 'number' ? this.midiToNote(note) : note;
+    const noteStr = typeof note === 'number' ? midiToNote(note) : note;
     const normalizedVelocity = Math.max(0, Math.min(1, velocity));
     
     // Apply velocity curve (quadratic) for more natural response
@@ -346,7 +347,7 @@ class AudioEngine {
     // Handle preset-specific behavior
     if (this.currentPreset.synthType === 'fm') {
       // FM synth: frequency-dependent filter cutoff
-      const midiNote = typeof note === 'number' ? note : this.noteToMidi(noteStr);
+      const midiNote = typeof note === 'number' ? note : noteToMidi(noteStr);
       const noteRatio = (midiNote - 36) / 36;
       const noteRatioClamped = Math.max(0, Math.min(1, noteRatio));
       
@@ -377,27 +378,8 @@ class AudioEngine {
       return;
     }
 
-    const noteStr = typeof note === 'number' ? this.midiToNote(note) : note;
+    const noteStr = typeof note === 'number' ? midiToNote(note) : note;
     this.synth.triggerRelease(noteStr);
-  }
-
-  private midiToNote(midiNote: MidiNote): Note {
-    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const octave = Math.floor(midiNote / 12) - 1;
-    const noteName = noteNames[midiNote % 12];
-    return `${noteName}${octave}` as Note;
-  }
-
-  private noteToMidi(note: Note): MidiNote {
-    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const match = note.match(/^([A-G]#?)(-?\d+)$/);
-    if (!match) return 60; // Default to C4 if parsing fails
-    
-    const [, noteName, octaveStr] = match;
-    const octave = parseInt(octaveStr, 10);
-    const noteIndex = noteNames.indexOf(noteName);
-    
-    return ((octave + 1) * 12 + noteIndex) as MidiNote;
   }
 
   isInitialized(): boolean {

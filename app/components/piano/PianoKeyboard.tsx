@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { PianoKey, type KeyColor } from './PianoKey';
+import { midiToNote } from '@/app/utils/music';
 import type { Note, MidiNote } from '@/app/types/music';
 
 interface PianoKeyboardProps {
@@ -17,13 +18,6 @@ interface KeyInfo {
   midiNote: MidiNote;
   color: KeyColor;
   label?: string;
-}
-
-function midiToNote(midiNote: MidiNote): Note {
-  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const octave = Math.floor(midiNote / 12) - 1;
-  const noteName = noteNames[midiNote % 12];
-  return `${noteName}${octave}` as Note;
 }
 
 function isBlackKey(midiNote: MidiNote): boolean {

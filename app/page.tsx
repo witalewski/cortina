@@ -5,6 +5,7 @@ import { useAudio } from '@/app/hooks/useAudio';
 import { useMidi } from '@/app/hooks/useMidi';
 import { useKeyboard } from '@/app/hooks/useKeyboard';
 import { PianoKeyboard } from '@/app/components/piano';
+import { midiToNote } from '@/app/utils/music';
 import type { Note, MidiNote } from '@/app/types/music';
 
 export default function Home() {
@@ -286,11 +287,4 @@ export default function Home() {
       </main>
     </div>
   );
-}
-
-function midiToNote(midiNote: MidiNote): Note {
-  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const octave = Math.floor(midiNote / 12) - 1;
-  const noteName = noteNames[midiNote % 12];
-  return `${noteName}${octave}` as Note;
 }
