@@ -149,8 +149,9 @@ This allows adding `@tonejs/piano` (Salamander Grand Piano samples) as an altern
 
 | Date | Phase | Changes |
 |------|-------|---------|
-| 2026-02-04 | Phase 1 | Improved envelope: attack 0.02s, decay 0.5s, sustain 0.02, release 1s - softer attack, longer decay for fuller sound with continuous decay |
+| 2026-02-04 | Phase 1 | Improved envelope: attack 0.02s, decay 0.7s, sustain 0.02, release 1s - softer attack, longer decay for fuller sound with continuous decay |
 | 2026-02-04 | Phase 2 | Added velocity support: keyboard input passes velocity (0.7 default), MIDI velocity normalized 0-127→0-1 |
 | 2026-02-04 | Phase 3 | Added lowpass filter + velocity-dependent cutoff: 1500Hz base + (velocity × 3000Hz) - warmer base, brighter when played harder |
 | 2026-02-04 | Phase 4 | Switched to FMSynth: harmonicity 2, modulationIndex 10, with modulationEnvelope - richer, more complex harmonics |
 | 2026-02-04 | Phase 5 | Added reverb: decay 1.5s, wet 0.2 - spatial realism, sound sits in a room |
+| 2026-02-04 | Tweaks | Added quadratic velocity curve (vel²) for more natural dynamics; increased decay to 0.7s for longer sustain |
