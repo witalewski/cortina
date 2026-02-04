@@ -76,12 +76,16 @@ export function PianoKeyboard({
   const keyboardWidth = whiteKeys.length * 48; // 48px per white key (w-12)
   const keyboardHeight = 160; // approximate height of white keys
 
+  // When rotating, we need to translate to center the keyboard properly
+  // After 90deg rotation, the keyboard's visual width becomes its height
+  // Translation needed: (width - height) / 2 to center it
+  const rotationOffset = (keyboardWidth - keyboardHeight) / 2;
+
   return (
     <div 
       className={`relative inline-flex items-start ${rotateForMobile ? 'origin-center' : ''}`}
       style={rotateForMobile ? {
-        transform: 'rotate(90deg)',
-        // Swap width/height in the layout so it fits vertically
+        transform: `rotate(90deg) translateX(${rotationOffset}px) translateY(${rotationOffset}px)`,
         width: `${keyboardHeight}px`,
         height: `${keyboardWidth}px`,
       } : undefined}
