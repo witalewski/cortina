@@ -1,34 +1,20 @@
 'use client';
 
 import { useAudio } from '@/app/hooks/useAudio';
+import { PianoKeyboard } from '@/app/components/piano';
 
 export default function Home() {
   const { isInitialized, isInitializing, error, initialize, playNote, stopNote } = useAudio();
 
-  const testNotes = [
-    { note: 'C3' as const, label: 'C3 (Low)' },
-    { note: 'E3' as const, label: 'E3' },
-    { note: 'G3' as const, label: 'G3' },
-    { note: 'C4' as const, label: 'C4 (Middle C)' },
-    { note: 'E4' as const, label: 'E4' },
-    { note: 'G4' as const, label: 'G4' },
-    { note: 'C5' as const, label: 'C5 (High)' },
-  ];
-
-  const playTestNote = (note: string) => {
-    playNote(note as any);
-    setTimeout(() => stopNote(note as any), 500);
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black p-8">
-      <main className="w-full max-w-2xl bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8">
+      <main className="w-full max-w-4xl bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
             Cortina 🎹
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400">
-            Audio Engine Test UI
+            Musical Skills Training App
           </p>
         </div>
 
@@ -54,53 +40,22 @@ export default function Home() {
           <div className="space-y-6">
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
               <p className="text-green-700 dark:text-green-400 font-semibold">
-                ✓ Audio Engine Initialized
+                ✓ Audio Engine Ready
               </p>
             </div>
 
-            <div>
-              <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
-                Test Notes
-              </h2>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Click a button to play a note. Each note will play for 500ms.
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {testNotes.map(({ note, label }) => (
-                  <button
-                    key={note}
-                    onClick={() => playTestNote(note)}
-                    className="px-4 py-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-900 dark:text-zinc-50 font-medium rounded-lg transition-colors shadow"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+            <div className="flex justify-center py-8">
+              <PianoKeyboard
+                startNote={48}
+                numKeys={25}
+                onNotePress={playNote}
+                onNoteRelease={stopNote}
+              />
             </div>
 
-            <div>
-              <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
-                Sustained Note Test
-              </h2>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Hold the button to sustain the note
-              </p>
-              <button
-                onMouseDown={() => playNote('A4')}
-                onMouseUp={() => stopNote('A4')}
-                onMouseLeave={() => stopNote('A4')}
-                onTouchStart={() => playNote('A4')}
-                onTouchEnd={() => stopNote('A4')}
-                className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-semibold rounded-lg shadow-lg transition-colors"
-              >
-                Hold for A4 (440Hz)
-              </button>
-            </div>
-
-            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
-                If you can hear sounds, Phase 2 is working correctly! 🎉
-              </p>
+            <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+              <p>Click the piano keys to play notes</p>
+              <p className="mt-1">25 keys from C3 to C5</p>
             </div>
           </div>
         )}
