@@ -5,8 +5,7 @@ import { useAudio } from '@/app/hooks/useAudio';
 import { useMidi } from '@/app/hooks/useMidi';
 import { useKeyboard } from '@/app/hooks/useKeyboard';
 import { PianoKeyboard } from '@/app/components/piano';
-import { StatusBadge } from '@/app/components/ui/StatusBadge';
-import { MidiStatusBadge } from '@/app/components/ui/MidiStatusBadge';
+import { StatusIndicator } from '@/app/components/ui/StatusIndicator';
 import { InstrumentSelector } from '@/app/components/ui/InstrumentSelector';
 import { midiToNote } from '@/app/utils/music';
 import type { Note, MidiNote } from '@/app/types/music';
@@ -92,37 +91,23 @@ export default function Home() {
             )}
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Status boxes in single row */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <StatusBadge 
-                status="success" 
-                label="Audio Engine Ready" 
-              />
-              
-              <MidiStatusBadge
-                isInitialized={midiInitialized}
-                isSupported={midiSupported}
-                devices={midiDevices}
-                error={midiError}
-                onConnect={initializeMidi}
+          <div className="space-y-8">
+            {/* Compact instrument selector - centered */}
+            <div className="flex justify-center">
+              <InstrumentSelector
+                currentPresetName={presetName}
+                isLoading={isLoadingPreset}
+                presets={[
+                  { preset: presets.SAMPLED_PIANO_PRESET, category: 'sampled' },
+                  { preset: presets.WARM_PIANO_PRESET, category: 'synth' },
+                  { preset: presets.BASIC_SYNTH_PRESET, category: 'synth' },
+                  { preset: presets.ACID_BASS_PRESET, category: 'synth' },
+                ]}
+                onPresetChange={setPreset}
               />
             </div>
 
-            {/* Instrument selector dropdown */}
-            <InstrumentSelector
-              currentPresetName={presetName}
-              isLoading={isLoadingPreset}
-              presets={[
-                { preset: presets.WARM_PIANO_PRESET, category: 'synth' },
-                { preset: presets.BASIC_SYNTH_PRESET, category: 'synth' },
-                { preset: presets.ACID_BASS_PRESET, category: 'synth' },
-                { preset: presets.SAMPLED_PIANO_PRESET, category: 'sampled' },
-              ]}
-              onPresetChange={setPreset}
-            />
-
-            <div className="flex justify-center py-8">
+            <div className="flex justify-center">
               <PianoKeyboard
                 startNote={48}
                 numKeys={25}
@@ -154,6 +139,18 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* Compact status indicator - fixed bottom-right */}
+      {isInitialized && (
+        <StatusIndicator
+          audioReady={isInitialized}
+          midiInitialized={midiInitialized}
+          midiSupported={midiSupported}
+          midiDevices={midiDevices}
+          midiError={midiError}
+          onMidiConnect={initializeMidi}
+        />
+      )}
     </div>
   );
 }
