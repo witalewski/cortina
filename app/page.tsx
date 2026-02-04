@@ -13,8 +13,8 @@ export default function Home() {
   
   const { isInitialized, isInitializing, error, initialize, playNote, stopNote } = useAudio();
 
-  const handleNotePress = useCallback((note: Note | MidiNote) => {
-    playNote(note);
+  const handleNotePress = useCallback((note: Note | MidiNote, velocity?: number) => {
+    playNote(note, velocity);
     // Track pressed notes for visual feedback
     const noteStr = typeof note === 'number' ? midiToNote(note) : note;
     setPressedNotes(prev => new Set(prev).add(noteStr));

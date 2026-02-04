@@ -39,15 +39,17 @@ const KEYBOARD_TO_MIDI: KeyboardMapping = {
 };
 
 interface UseKeyboardOptions {
-  onNoteOn?: (note: Note | MidiNote) => void;
+  onNoteOn?: (note: Note | MidiNote, velocity?: number) => void;
   onNoteOff?: (note: Note | MidiNote) => void;
   enabled?: boolean;
+  defaultVelocity?: number;
 }
 
 export function useKeyboard({
   onNoteOn,
   onNoteOff,
   enabled = true,
+  defaultVelocity = 0.7,
 }: UseKeyboardOptions = {}) {
   const pressedKeysRef = useRef<Set<string>>(new Set());
 
@@ -79,9 +81,9 @@ export function useKeyboard({
       
       pressedKeysRef.current.add(key);
       event.preventDefault();
-      onNoteOn?.(midiNote);
+      onNoteOn?.(midiNote, defaultVelocity);
     }
-  }, [enabled, onNoteOn]);
+  }, [enabled, onNoteOn, defaultVelocity]);
 
   const handleKeyUp = useCallback((event: KeyboardEvent) => {
     if (!enabled) return;
