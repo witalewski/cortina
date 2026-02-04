@@ -8,6 +8,8 @@ jest.mock('tone', () => {
     connect: jest.fn().mockReturnThis(),
     toDestination: jest.fn().mockReturnThis(),
     dispose: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
   };
 
   const mockFilter = {
@@ -36,6 +38,7 @@ jest.mock('tone', () => {
     PolySynth: mockPolySynth,
     Synth: jest.fn(),
     FMSynth: jest.fn(),
+    MonoSynth: jest.fn(),
     Filter: mockFilterConstructor,
     Reverb: mockReverbConstructor,
     context: {

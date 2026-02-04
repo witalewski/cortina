@@ -126,6 +126,16 @@ export default function Home() {
                   >
                     Basic Synth
                   </button>
+                  <button
+                    onClick={() => setPreset(presets.ACID_BASS_PRESET)}
+                    className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                      presetName === 'Acid Bass'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
+                    }`}
+                  >
+                    Acid Bass
+                  </button>
                 </div>
               </div>
               

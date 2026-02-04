@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { audioEngine, WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, type SynthPreset } from '@/app/services/audio';
+import { audioEngine, WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, ACID_BASS_PRESET, type SynthPreset } from '@/app/services/audio';
 import type { Note, MidiNote } from '@/app/types/music';
 
 export function useAudio() {
@@ -69,6 +69,6 @@ export function useAudio() {
     playNote,
     stopNote,
     setPreset,
-    presets: { WARM_PIANO_PRESET, BASIC_SYNTH_PRESET },
+    presets: { WARM_PIANO_PRESET, BASIC_SYNTH_PRESET, ACID_BASS_PRESET },
   };
 }
