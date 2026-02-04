@@ -1,64 +1,109 @@
-import Image from "next/image";
+'use client';
+
+import { useAudio } from '@/app/hooks/useAudio';
 
 export default function Home() {
+  const { isInitialized, isInitializing, error, initialize, playNote, stopNote } = useAudio();
+
+  const testNotes = [
+    { note: 'C3' as const, label: 'C3 (Low)' },
+    { note: 'E3' as const, label: 'E3' },
+    { note: 'G3' as const, label: 'G3' },
+    { note: 'C4' as const, label: 'C4 (Middle C)' },
+    { note: 'E4' as const, label: 'E4' },
+    { note: 'G4' as const, label: 'G4' },
+    { note: 'C5' as const, label: 'C5 (High)' },
+  ];
+
+  const playTestNote = (note: string) => {
+    playNote(note as any);
+    setTimeout(() => stopNote(note as any), 500);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black p-8">
+      <main className="w-full max-w-2xl bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
+            Cortina 🎹
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-zinc-600 dark:text-zinc-400">
+            Audio Engine Test UI
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+        {!isInitialized ? (
+          <div className="text-center space-y-4">
+            <p className="text-zinc-700 dark:text-zinc-300 mb-6">
+              Click the button below to initialize the audio engine
+            </p>
+            <button
+              onClick={initialize}
+              disabled={isInitializing}
+              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-lg transition-colors text-lg"
+            >
+              {isInitializing ? 'Initializing...' : 'Start Audio Engine'}
+            </button>
+            {error && (
+              <p className="text-red-600 dark:text-red-400 mt-4">
+                Error: {error}
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
+              <p className="text-green-700 dark:text-green-400 font-semibold">
+                ✓ Audio Engine Initialized
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
+                Test Notes
+              </h2>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                Click a button to play a note. Each note will play for 500ms.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {testNotes.map(({ note, label }) => (
+                  <button
+                    key={note}
+                    onClick={() => playTestNote(note)}
+                    className="px-4 py-3 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-700 dark:hover:bg-zinc-600 text-zinc-900 dark:text-zinc-50 font-medium rounded-lg transition-colors shadow"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-4">
+                Sustained Note Test
+              </h2>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                Hold the button to sustain the note
+              </p>
+              <button
+                onMouseDown={() => playNote('A4')}
+                onMouseUp={() => stopNote('A4')}
+                onMouseLeave={() => stopNote('A4')}
+                onTouchStart={() => playNote('A4')}
+                onTouchEnd={() => stopNote('A4')}
+                className="w-full px-6 py-4 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-semibold rounded-lg shadow-lg transition-colors"
+              >
+                Hold for A4 (440Hz)
+              </button>
+            </div>
+
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-700">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+                If you can hear sounds, Phase 2 is working correctly! 🎉
+              </p>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
