@@ -92,8 +92,8 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Compact instrument selector - centered */}
-            <div className="flex justify-center">
+            {/* Compact instrument selector - right aligned */}
+            <div className="flex justify-end">
               <InstrumentSelector
                 currentPresetName={presetName}
                 isLoading={isLoadingPreset}

@@ -33,10 +33,6 @@ export function InstrumentSelector({
 
   return (
     <div className="inline-flex items-center gap-2">
-      <span className="text-sm text-zinc-600 dark:text-zinc-400">
-        🎹
-      </span>
-      
       <div className="relative">
         <button
           onClick={() => !isLoading && setShowDropdown(!showDropdown)}
