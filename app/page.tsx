@@ -11,7 +11,7 @@ export default function Home() {
   const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
   const [showMidiDevices, setShowMidiDevices] = useState(false);
   
-  const { isInitialized, isInitializing, error, initialize, playNote, stopNote } = useAudio();
+  const { isInitialized, isInitializing, error, initialize, playNote, stopNote, setPreset, presetName, presets } = useAudio();
 
   const handleNotePress = useCallback((note: Note | MidiNote, velocity?: number) => {
     playNote(note, velocity);
@@ -99,6 +99,34 @@ export default function Home() {
                 <p className="text-green-700 dark:text-green-400 font-semibold">
                   ✓ Audio Engine Ready
                 </p>
+              </div>
+
+              <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-blue-700 dark:text-blue-400 font-semibold mb-2">
+                  🎹 Preset: {presetName}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPreset(presets.WARM_PIANO_PRESET)}
+                    className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                      presetName === 'Warm Piano'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
+                    }`}
+                  >
+                    Warm Piano
+                  </button>
+                  <button
+                    onClick={() => setPreset(presets.BASIC_SYNTH_PRESET)}
+                    className={`flex-1 px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                      presetName === 'Basic Synth'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60'
+                    }`}
+                  >
+                    Basic Synth
+                  </button>
+                </div>
               </div>
               
               <div className={`flex-1 rounded-lg border relative ${

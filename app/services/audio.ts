@@ -7,14 +7,14 @@ interface SynthPreset {
   synth: {
     harmonicity: number;
     modulationIndex: number;
-    oscillator: { type: string };
+    oscillator: { type: 'sine' | 'square' | 'sawtooth' | 'triangle' };
     envelope: {
       attack: number;
       decay: number;
       sustain: number;
       release: number;
     };
-    modulation: { type: string };
+    modulation: { type: 'sine' | 'square' | 'sawtooth' | 'triangle' };
     modulationEnvelope: {
       attack: number;
       decay: number;
@@ -76,6 +76,45 @@ const WARM_PIANO_PRESET: SynthPreset = {
     decay: 1.5,
     preDelay: 0.01,
     wet: 0.15
+  }
+};
+
+// Basic synth preset - simple, bright, classic synth sound
+const BASIC_SYNTH_PRESET: SynthPreset = {
+  name: 'Basic Synth',
+  synth: {
+    harmonicity: 1,
+    modulationIndex: 3,
+    oscillator: { type: 'triangle' },
+    envelope: {
+      attack: 0.005,
+      decay: 0.3,
+      sustain: 0.3,
+      release: 0.5
+    },
+    modulation: { type: 'square' },
+    modulationEnvelope: {
+      attack: 0.005,
+      decay: 0.2,
+      sustain: 0,
+      release: 0.3
+    }
+  },
+  filter: {
+    type: 'lowpass',
+    frequency: 4000,
+    Q: 1,
+    rolloff: -12
+  },
+  filterMapping: {
+    baseCutoffLow: 5000,
+    baseCutoffHigh: 4000,
+    velocityCutoffRange: 1000
+  },
+  reverb: {
+    decay: 0.8,
+    preDelay: 0.005,
+    wet: 0.05
   }
 };
 
@@ -197,6 +236,53 @@ class AudioEngine {
     return Tone.context.state;
   }
 
+  getPresetName(): string {
+    return this.currentPreset.name;
+  }
+
+  async setPreset(preset: SynthPreset): Promise<void> {
+    if (!this.initialized) {
+      this.currentPreset = preset;
+      return;
+    }
+
+    // Dispose current audio nodes
+    this.synth?.dispose();
+    this.filter?.dispose();
+    this.reverb?.dispose();
+
+    // Update preset
+    this.currentPreset = preset;
+
+    // Recreate audio nodes with new preset
+    this.filter = new Tone.Filter({
+      type: preset.filter.type,
+      frequency: preset.filter.frequency,
+      Q: preset.filter.Q,
+      rolloff: preset.filter.rolloff
+    });
+
+    this.reverb = new Tone.Reverb({
+      decay: preset.reverb.decay,
+      preDelay: preset.reverb.preDelay
+    });
+
+    this.synth = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: preset.synth.harmonicity,
+      modulationIndex: preset.synth.modulationIndex,
+      oscillator: preset.synth.oscillator,
+      envelope: preset.synth.envelope,
+      modulation: preset.synth.modulation,
+      modulationEnvelope: preset.synth.modulationEnvelope
+    }).connect(this.filter);
+
+    // Reconnect signal chain
+    this.filter.connect(this.reverb);
+    this.reverb.toDestination();
+    this.filter.toDestination();
+    this.reverb.wet.value = preset.reverb.wet;
+  }
+
   dispose(): void {
     this.synth?.dispose();
     this.filter?.dispose();
@@ -210,4 +296,4 @@ class AudioEngine {
 
 export const audioEngine = new AudioEngine();
 export type { SynthPreset };
-export { WARM_PIANO_PRESET };
+export { WARM_PIANO_PRESET, BASIC_SYNTH_PRESET };
