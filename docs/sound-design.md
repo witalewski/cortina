@@ -1,167 +1,137 @@
 # Sound Design
 
-This document describes the sound design goals, techniques, and implementation plan for Cortina's synthesizer.
+This document describes the sound design philosophy and implementation for Cortina's synthesizer.
 
-## Goals
-
-Transform the synthesizer from a "robotic, thin, metallic" sound to a warmer, more piano-like tone using pure synthesis techniques in Tone.js.
-
-### Design Principles
+## Design Principles
 
 1. **Warmth over accuracy** - We're not emulating a real piano, but creating a pleasant, musical sound
-2. **Expressiveness** - Velocity should affect both volume AND timbre
-3. **Spatial realism** - Sound should exist "in a room", not "in your head"
-4. **Incremental improvement** - Each change should be audible and testable
-5. **Future flexibility** - Architecture should allow adding sample-based instruments later
+2. **Expressiveness** - Velocity affects both volume AND timbre
+3. **Spatial realism** - Sound exists "in a room", not "in your head"
+4. **Future flexibility** - Architecture allows adding sample-based instruments later
 
 ## Current Implementation
 
-**Final optimized configuration (WARM_PIANO_PRESET):**
-- **Synth**: `Tone.PolySynth(Tone.FMSynth)` with harmonicity 2, modulationIndex 12
-- **Envelope**: attack 0.02s, decay 0.7s, sustain 0.02, release 1s
-- **Filter**: Lowpass, frequency-aware (low notes 4000-6000Hz, high notes 2000-4000Hz)
-- **Reverb**: decay 1.5s, 15% wet
-- **Signal chain**: FMSynth → Filter (velocity-controlled) → Reverb → Destination
+The synthesizer uses the `WARM_PIANO_PRESET` configuration defined in `app/services/audio.ts`.
 
-### Key Features
-- **Velocity curve**: Quadratic (vel²) for natural dynamics
-- **Frequency-aware filtering**: Low notes preserve more harmonics
-- **Dynamic brightness**: Filter cutoff responds to velocity
-- **Spatial realism**: Subtle reverb places sound in acoustic space
+### Signal Chain
 
----
-
-## Implementation Plan
-
-### Phase 1: Improve Envelope (warmth + realism)
-- [x] Adjust attack to 0.02s (softens initial transient, removes click)
-- [x] Increase decay to 0.3s (more natural fade-in to sustain)
-- [x] Lower sustain to 0.15 (pianos don't sustain at full volume)
-- [x] Keep release at 1s (already good)
-
-**Expected result**: Softer, less harsh attack; more natural note evolution
-**Status**: ✅ Complete
-
-### Phase 2: Velocity Support (expressiveness)
-- [ ] Verify velocity is properly passed through from all input sources
-- [ ] Ensure MIDI velocity (0-127) is normalized to 0-1 range
-- [ ] Verify keyboard input sends reasonable default velocity
-- [ ] Test that volume responds to velocity
-
-**Expected result**: Playing dynamics affect volume
-
-### Phase 3: Add Lowpass Filter + Velocity-Dependent Timbre
-- [ ] Add `Tone.Filter` to signal chain (lowpass, base cutoff ~1500Hz)
-- [ ] Implement dynamic cutoff based on velocity (soft = mellow, hard = bright)
-- [ ] Formula: cutoff = baseCutoff + (velocity * cutoffRange)
-- [ ] This mimics how real pianos get brighter when hit harder
-
-**Expected result**: Warmer base tone; harder playing reveals more brightness
-
-### Phase 4: Switch to FMSynth (richer harmonics)
-- [x] Replace `Tone.Synth` with `Tone.FMSynth` in PolySynth
-- [x] Configure harmonicity ~2 and modulationIndex ~10
-- [x] Add modulationEnvelope for dynamic timbre (bright attack → mellow sustain)
-
-**Expected result**: Richer harmonic content, more complex timbre
-**Status**: ✅ Complete
-
-### Phase 5: Add Room Ambience (spatial realism)
-- [x] Add `Tone.Reverb` with subtle settings (decay 1.5s, wet 0.2)
-- [x] Simulate piano in a room rather than "in your head"
-- [x] Keep it subtle to avoid muddiness
-
-**Expected result**: Sound sits in a space, less "sterile"
-**Status**: ✅ Complete
-
-### Phase 6: Refactor for Extensibility
-- [ ] Extract synth configuration into a `SynthPreset` type
-- [ ] Create preset objects (e.g., `WARM_PIANO_PRESET`)
-- [ ] Allow future swapping of entire sound source (prepares for samples)
-
-### Phase 7: Documentation
-- [ ] Document final parameter choices in this file
-- [ ] Update architecture.md with audio pipeline changes
-- [ ] Update api-reference.md if public API changes
-
----
-
-## Technical Reference
-
-### Target Signal Chain
 ```
 FMSynth → Filter (lowpass, velocity-controlled) → Reverb → Destination
 ```
+
+### Components
+
+**1. FM Synthesis**
+- Type: `Tone.PolySynth(Tone.FMSynth)`
+- Harmonicity: 2 (modulator 2x carrier frequency)
+- Modulation index: 12 (controls harmonic richness)
+- Oscillators: Sine waves (carrier and modulator)
+- Provides rich, evolving harmonics
+
+**2. Envelope**
+- Attack: 0.02s (soft, natural onset)
+- Decay: 0.7s (fuller sound, gives notes body)
+- Sustain: 0.02 (continuous decay like real piano)
+- Release: 1s (natural fade-out)
+- Modulation envelope: Separate envelope for FM timbre evolution
+
+**3. Lowpass Filter**
+- Type: Lowpass, -24dB/octave rolloff
+- **Frequency-aware**: Preserves harmonics based on pitch
+  - Low notes (C3): 4000-6000Hz cutoff range
+  - High notes (C5): 2000-4000Hz cutoff range
+  - Linear interpolation between
+- **Velocity-dependent**: +2000Hz range from velocity
+  - Soft playing → mellow, warm tone
+  - Hard playing → bright, cutting tone
+
+**4. Reverb**
+- Decay: 1.5s (room simulation)
+- Pre-delay: 0.01s
+- Wet mix: 15% (subtle, doesn't muddy the sound)
+- Creates spatial depth
+
+**5. Velocity Response**
+- Curve: Quadratic (vel²)
+  - Soft (0.5) → 0.25 actual volume
+  - Medium (0.7) → 0.49 actual volume
+  - Hard (1.0) → 1.0 actual volume
+- Makes soft playing easier to control, mimics real piano dynamics
+
+## Technical Details
 
 ### Why These Techniques?
 
 | Problem | Solution | Why it helps |
 |---------|----------|--------------|
-| Harsh attack | Longer attack time | Real piano hammers don't strike instantly |
-| No dynamics | Velocity support | Expressiveness through playing intensity |
+| Harsh attack | Longer attack time (0.02s) | Real piano hammers don't strike instantly |
 | Thin sound | Lowpass filter | Removes harsh digital harmonics |
+| Muted bass | Frequency-aware filtering | Low notes preserve more harmonics |
 | Static dynamics | Velocity → filter cutoff | Real pianos are brighter when hit harder |
-| Static timbre | FM synthesis | Harmonics evolve over note duration |
-| Sterile feel | Reverb | Piano naturally exists in acoustic space |
+| Robotic feel | FM synthesis + modulation envelope | Harmonics evolve over note duration |
+| Sterile sound | Reverb | Piano naturally exists in acoustic space |
+| Linear dynamics | Quadratic velocity curve | Natural piano response |
 
-### Velocity-Dependent Timbre
+### Frequency-Aware Filtering
 
-Real pianos exhibit velocity-dependent brightness:
-- **Soft playing (pp)**: Mellow, warm tone (fewer high harmonics)
-- **Hard playing (ff)**: Bright, cutting tone (more high harmonics)
+Low notes on real pianos are very rich with harmonics. The filter compensates:
 
-Implementation approach:
 ```typescript
-// On each noteOn, calculate filter cutoff from velocity
-const baseCutoff = 1500;  // Hz - mellow base tone
-const cutoffRange = 3000; // Hz - how much brighter at max velocity
-const cutoff = baseCutoff + (velocity * cutoffRange);
-// Result: soft (vel=0.2) → 2100Hz, hard (vel=1.0) → 4500Hz
+// Calculate note position (C3=0, C5=1)
+const noteRatio = (midiNote - 36) / 36;
+const noteRatioClamped = Math.max(0, Math.min(1, noteRatio));
+
+// Interpolate cutoff frequency
+const baseCutoff = 4000 - (noteRatioClamped * 2000); // 4000→2000Hz
+
+// Add velocity modulation
+const cutoff = baseCutoff + (velocity * 2000);
 ```
 
-### Architecture for Future Enhancements
+This ensures bass notes stay rich and full while high notes remain clear.
 
-**Preset System (✅ Implemented):**
-The `AudioEngine` now uses a `SynthPreset` configuration system that centralizes all sound parameters. This makes it easy to:
-- Create alternative sound presets
-- Switch between presets at runtime (future)
-- Document and share configurations
+## Architecture
 
-**Sample-Based Piano (Future):**
-The architecture could be extended to support swappable sound sources:
+### Preset System
+
+All sound parameters are centralized in the `SynthPreset` interface:
 
 ```typescript
-interface SoundSource {
-  noteOn(note: Note, velocity: number): void;
-  noteOff(note: Note): void;
-  connect(destination: Tone.ToneAudioNode): void;
-  dispose(): void;
+interface SynthPreset {
+  name: string;
+  synth: { /* FM synthesis parameters */ };
+  filter: { /* filter configuration */ };
+  filterMapping: { /* frequency-aware mapping */ };
+  reverb: { /* spatial effects */ };
 }
 ```
 
-This would allow adding `@tonejs/piano` (Salamander Grand Piano samples) as an alternative without changing the effects chain or public API.
+Current preset: `WARM_PIANO_PRESET` (exported from `audio.ts`)
 
----
+**Benefits:**
+- All parameters in one place
+- Easy to create alternative sounds
+- Supports future preset switching
+- Self-documenting
 
-## Out of Scope (for now)
+### Future Enhancements
 
-- Sample-based piano (@tonejs/piano)
-- Per-note detuning
-- Sustain pedal behavior
-- String resonance / sympathetic vibration
+**Sample-Based Piano:**
+The architecture could be extended with a `SoundSource` interface to support sample-based instruments like `@tonejs/piano` (Salamander Grand Piano) without changing the effects chain or public API.
 
----
+**Additional Ideas:**
+- Per-note detuning for natural variation
+- Sustain pedal support
+- String resonance simulation
+- Alternative presets (electric piano, organ, etc.)
 
-## Changelog
+## Result
 
-| Date | Phase | Changes |
-|------|-------|---------|
-| 2026-02-04 | Phase 1 | Improved envelope: attack 0.02s, decay 0.7s, sustain 0.02, release 1s - softer attack, longer decay for fuller sound with continuous decay |
-| 2026-02-04 | Phase 2 | Added velocity support: keyboard input passes velocity (0.7 default), MIDI velocity normalized 0-127→0-1 |
-| 2026-02-04 | Phase 3 | Added lowpass filter + velocity-dependent cutoff: frequency-aware (low notes 4000-6000Hz, high notes 2000-4000Hz) for richer bass |
-| 2026-02-04 | Phase 4 | Switched to FMSynth: harmonicity 2, modulationIndex 12, with modulationEnvelope - richer, more complex harmonics |
-| 2026-02-04 | Phase 5 | Added reverb: decay 1.5s, wet 0.15 - spatial realism, sound sits in a room |
-| 2026-02-04 | Phase 6 | Refactored to preset system: SynthPreset interface and WARM_PIANO_PRESET constant |
-| 2026-02-04 | Tweaks | Quadratic velocity curve (vel²); frequency-dependent filter for rich bass; adjusted FM/reverb for clarity |
+The synthesizer produces a warm, expressive piano-like sound with:
+- ✅ Natural dynamics and velocity response
+- ✅ Rich, full bass tones
+- ✅ Clear, bright treble
+- ✅ Spatial depth from reverb
+- ✅ Evolving harmonics from FM synthesis
 
-**Result**: Warm, expressive piano-like sound with natural dynamics, rich bass, and spatial depth. All parameters centralized in `WARM_PIANO_PRESET` for easy customization.
+All achieved using pure synthesis in Tone.js, with no external samples required.
