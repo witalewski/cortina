@@ -1,0 +1,179 @@
+# API Reference
+
+## Services
+
+### `audioEngine` (audio.ts)
+
+Singleton Tone.js audio engine.
+
+```typescript
+import { audioEngine } from '@/app/services/audio';
+
+// Initialize (requires user gesture)
+await audioEngine.initialize();
+
+// Play notes
+audioEngine.noteOn('C4', 0.8);      // Note string + velocity
+audioEngine.noteOn(60, 0.8);        // MIDI number + velocity
+audioEngine.noteOff('C4');
+
+// State checks
+audioEngine.isInitialized();        // boolean
+audioEngine.getContextState();      // 'running' | 'suspended'
+
+// Cleanup
+audioEngine.dispose();
+```
+
+### `midiService` (midi.ts)
+
+Web MIDI API wrapper with device management.
+
+```typescript
+import { midiService } from '@/app/services/midi';
+
+// Initialize (shows permission prompt)
+const success = await midiService.initialize();
+
+// Device management
+midiService.getDevices();           // MidiDevice[]
+midiService.enableDevice(id);
+midiService.enableAllDevices();
+
+// Message handling
+const unsubscribe = midiService.onMessage((msg) => {
+  if (msg.type === 'noteon') playNote(msg.note, msg.velocity);
+  if (msg.type === 'noteoff') stopNote(msg.note);
+});
+
+// Device change events (connect/disconnect)
+const unsubscribe = midiService.onDeviceChange((devices) => {
+  console.log('Devices changed:', devices);
+});
+```
+
+---
+
+## Hooks
+
+### `useAudio()`
+
+React integration for audio engine.
+
+```typescript
+const {
+  isInitialized,    // boolean
+  isInitializing,   // boolean
+  error,            // string | null
+  initialize,       // () => Promise<boolean>
+  playNote,         // (note: Note | MidiNote, velocity?: number) => void
+  stopNote,         // (note: Note | MidiNote) => void
+} = useAudio();
+```
+
+### `useMidi(options)`
+
+React integration for MIDI devices.
+
+```typescript
+const {
+  isSupported,      // boolean (false in Firefox/Safari)
+  isInitialized,    // boolean
+  devices,          // MidiDevice[]
+  error,            // string | null
+  initialize,       // () => Promise<boolean>
+  enableDevice,     // (id: string) => void
+  refreshDevices,   // () => void
+} = useMidi({
+  onNoteOn: (note: MidiNote, velocity: number) => {},
+  onNoteOff: (note: MidiNote) => {},
+  autoEnable: true, // Auto-enable all devices on connect
+});
+```
+
+### `useKeyboard(options)`
+
+Computer keyboard to MIDI mapping.
+
+```typescript
+useKeyboard({
+  onNoteOn: (midiNote: MidiNote) => {},
+  onNoteOff: (midiNote: MidiNote) => {},
+  enabled: boolean,  // Only enable after audio ready
+});
+```
+
+**Keyboard mapping (25 keys, C3-C5):**
+- White keys: `A S D F G H J K L ; '`
+- Black keys: `W E T Y U O P [`
+
+---
+
+## Components
+
+### `<PianoKeyboard />`
+
+Main piano keyboard UI component.
+
+```typescript
+import { PianoKeyboard } from '@/app/components/piano';
+
+<PianoKeyboard
+  startNote={48}                    // MIDI note number (C3)
+  numKeys={25}                      // Number of keys to display
+  onNotePress={(note: Note) => {}}  // Mouse/touch down
+  onNoteRelease={(note: Note) => {}}
+  pressedNotes={Set<Note>}          // For visual feedback
+/>
+```
+
+### `<PianoKey />`
+
+Individual piano key (used internally by PianoKeyboard).
+
+```typescript
+import { PianoKey } from '@/app/components/piano';
+
+<PianoKey
+  note="C4"                         // Note name
+  color="white"                     // 'white' | 'black'
+  isPressed={false}                 // Visual pressed state
+  onPress={(note: Note) => {}}
+  onRelease={(note: Note) => {}}
+  label="C4"                        // Optional label on key
+/>
+```
+
+---
+
+## Types (app/types/music.ts)
+
+```typescript
+// Note names
+type NoteName = 'C' | 'C#' | 'D' | 'D#' | 'E' | 'F' | 'F#' | 'G' | 'G#' | 'A' | 'A#' | 'B';
+type Octave = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+type Note = `${NoteName}${Octave}`;  // e.g., 'C4', 'F#3'
+
+// MIDI
+type MidiNote = number;              // 0-127
+
+// Constants
+const MIDI_NOTE_ON = 0x90;
+const MIDI_NOTE_OFF = 0x80;
+const MIDDLE_C_MIDI = 60;
+const NOTES_PER_OCTAVE = 12;
+
+// Interfaces
+interface MidiDevice {
+  id: string;
+  name: string;
+  manufacturer: string;
+}
+
+interface MidiMessage {
+  type: 'noteon' | 'noteoff' | 'controlchange';
+  note: MidiNote;
+  velocity: number;
+  channel: number;
+}
+```
