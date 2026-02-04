@@ -85,7 +85,7 @@ export function PianoKeyboard({
     <div 
       className={`relative inline-flex items-start ${rotateForMobile ? 'origin-center' : ''}`}
       style={rotateForMobile ? {
-        transform: `rotate(90deg) translateX(${rotationOffset}px) translateY(${rotationOffset}px)`,
+        transform: `rotate(90deg) translateX(${rotationOffset}px)`,
         width: `${keyboardHeight}px`,
         height: `${keyboardWidth}px`,
       } : undefined}
