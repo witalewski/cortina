@@ -62,7 +62,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black p-8">
-      <main className="w-full max-w-4xl bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8">
+      <main className="relative w-full max-w-4xl bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
             Cortina 🎹
@@ -91,9 +91,9 @@ export default function Home() {
             )}
           </div>
         ) : (
-          <div className="space-y-8">
-            {/* Compact instrument selector - right aligned */}
-            <div className="flex justify-end">
+          <>
+            {/* Compact instrument selector - top-right corner */}
+            <div className="absolute top-8 right-8">
               <InstrumentSelector
                 currentPresetName={presetName}
                 isLoading={isLoadingPreset}
@@ -107,36 +107,38 @@ export default function Home() {
               />
             </div>
 
-            <div className="flex justify-center">
-              <PianoKeyboard
-                startNote={48}
-                numKeys={25}
-                onNotePress={handleNotePress}
-                onNoteRelease={handleNoteRelease}
-                pressedNotes={pressedNotes}
-              />
-            </div>
-
-            <div className="text-center text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
-              <p className="font-semibold">How to Play:</p>
-              <p>🖱️ Click piano keys with your mouse</p>
-              {midiInitialized && <p>🎹 Play with your MIDI keyboard</p>}
-              <p>⌨️ Use computer keyboard:</p>
-              <div className="flex justify-center gap-8 mt-2 text-xs font-mono">
-                <div>
-                  <p className="text-zinc-500 dark:text-zinc-500 mb-1">White keys</p>
-                  <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">A S D F G H J K L ; &apos;</p>
-                </div>
-                <div>
-                  <p className="text-zinc-500 dark:text-zinc-500 mb-1">Black keys</p>
-                  <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">W E T Y U O P [</p>
-                </div>
+            <div className="space-y-8">
+              <div className="flex justify-center">
+                <PianoKeyboard
+                  startNote={48}
+                  numKeys={25}
+                  onNotePress={handleNotePress}
+                  onNoteRelease={handleNoteRelease}
+                  pressedNotes={pressedNotes}
+                />
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
-                Range: C3 to C5 (25 keys)
-              </p>
+
+              <div className="text-center text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
+                <p className="font-semibold">How to Play:</p>
+                <p>🖱️ Click piano keys with your mouse</p>
+                {midiInitialized && <p>🎹 Play with your MIDI keyboard</p>}
+                <p>⌨️ Use computer keyboard:</p>
+                <div className="flex justify-center gap-8 mt-2 text-xs font-mono">
+                  <div>
+                    <p className="text-zinc-500 dark:text-zinc-500 mb-1">White keys</p>
+                    <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">A S D F G H J K L ; &apos;</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500 dark:text-zinc-500 mb-1">Black keys</p>
+                    <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">W E T Y U O P [</p>
+                  </div>
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
+                  Range: C3 to C5 (25 keys)
+                </p>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </main>
 
