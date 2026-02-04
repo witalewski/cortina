@@ -25,7 +25,7 @@ class AudioEngine {
       },
       envelope: {
         attack: 0.02,
-        decay: 0.3,
+        decay: 0.5,
         sustain: 0.02,
         release: 1
       }
