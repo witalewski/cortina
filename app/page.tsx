@@ -101,7 +101,7 @@ export default function Home() {
                 </p>
               </div>
               
-              <div className={`flex-1 rounded-lg border ${
+              <div className={`flex-1 rounded-lg border relative ${
                 midiInitialized
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                   : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
@@ -144,8 +144,8 @@ export default function Home() {
                   </div>
                 )}
                 {showMidiDevices && midiDevices.length > 0 && (
-                  <div className="px-4 pb-4 pt-0 border-t border-green-200 dark:border-green-800">
-                    <ul className="mt-2 space-y-1">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-green-50 dark:bg-green-900/95 border border-green-200 dark:border-green-800 rounded-lg shadow-lg z-10 p-4">
+                    <ul className="space-y-1">
                       {midiDevices.map(device => (
                         <li key={device.id} className="text-xs text-green-600 dark:text-green-400">
                           • {device.name} {device.manufacturer && `(${device.manufacturer})`}
