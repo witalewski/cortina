@@ -27,7 +27,7 @@ Thank you for your interest in contributing to Cortina! This document provides g
    ```bash
    npm run dev
    ```
-   Open [http://localhost:3000](http://localhost:3000)
+   Open [http://localhost:3000/cortina](http://localhost:3000/cortina)
 
 4. **Build for production**
    ```bash

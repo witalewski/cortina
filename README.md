@@ -2,14 +2,16 @@
 
 A web-based musical skills training application featuring an in-browser synthesizer with piano keyboard visualization, controllable via MIDI devices and computer keyboard.
 
+**Live Demo**: [https://witalewski.github.io/cortina](https://witalewski.github.io/cortina)
+
 ## Features
 
-- 🎹 **Interactive Piano Keyboard** - 25-key visual piano interface (C3-C5)
+- 🎹 **Interactive Piano Keyboard** - 25-key visual piano with dynamic range
 - 🎵 **Multiple Instruments** - Sampled piano (default), FM synth, basic synth, and acid bass
 - 🎛️ **MIDI Device Support** - Connect and play with physical MIDI keyboards
 - ⌨️ **Computer Keyboard Input** - Play notes using your keyboard
-- 🎨 **Modern UI** - Responsive design with Tailwind CSS
-- 🎚️ **Velocity Sensitive** - Dynamic expression via MIDI velocity or keyboard defaults
+- 📱 **Mobile Support** - Rotated keyboard layout for portrait mode
+- 🎚️ **Velocity Sensitive** - Dynamic expression via MIDI velocity
 
 ## Tech Stack
 
@@ -37,7 +39,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
+Open [http://localhost:3000/cortina](http://localhost:3000/cortina) to see the app.
 
 ### Build for Production
 
