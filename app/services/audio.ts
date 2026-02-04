@@ -68,15 +68,26 @@ class AudioEngine {
     }
 
     const noteStr = typeof note === 'number' ? this.midiToNote(note) : note;
+    const midiNote = typeof note === 'number' ? note : this.noteToMidi(noteStr);
     const normalizedVelocity = Math.max(0, Math.min(1, velocity));
     
     // Apply velocity curve (quadratic) for more natural response
     // Soft playing is easier, hard playing requires more force
     const velocityCurved = normalizedVelocity * normalizedVelocity;
     
-    // Velocity-dependent filter cutoff (soft = mellow, hard = bright)
-    const baseCutoff = 2000;  // Hz - raised from 1500 for more clarity
-    const cutoffRange = 3000; // Hz - max at 5000Hz for brighter sound
+    // Frequency-dependent filter cutoff for richer low notes
+    // Low notes (e.g., C3/48) need higher cutoffs to preserve harmonics
+    // High notes (e.g., C5/72) can have lower cutoffs
+    const noteRatio = (midiNote - 36) / 36; // C3=0, C5=1
+    const noteRatioClamped = Math.max(0, Math.min(1, noteRatio));
+    
+    // Lower notes get higher base cutoff
+    const baseCutoffLow = 4000;   // Hz - for low notes
+    const baseCutoffHigh = 2000;  // Hz - for high notes
+    const baseCutoff = baseCutoffLow - (noteRatioClamped * (baseCutoffLow - baseCutoffHigh));
+    
+    // Velocity modulation
+    const cutoffRange = 2000; // Hz - velocity adds brightness
     const cutoff = baseCutoff + (normalizedVelocity * cutoffRange);
     this.filter.frequency.setValueAtTime(cutoff, Tone.now());
     
@@ -98,6 +109,18 @@ class AudioEngine {
     const octave = Math.floor(midiNote / 12) - 1;
     const noteName = noteNames[midiNote % 12];
     return `${noteName}${octave}` as Note;
+  }
+
+  private noteToMidi(note: Note): MidiNote {
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const match = note.match(/^([A-G]#?)(-?\d+)$/);
+    if (!match) return 60; // Default to C4 if parsing fails
+    
+    const [, noteName, octaveStr] = match;
+    const octave = parseInt(octaveStr, 10);
+    const noteIndex = noteNames.indexOf(noteName);
+    
+    return ((octave + 1) * 12 + noteIndex) as MidiNote;
   }
 
   isInitialized(): boolean {
