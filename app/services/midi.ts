@@ -14,10 +14,12 @@ export interface MidiMessage {
 }
 
 type MidiMessageCallback = (message: MidiMessage) => void;
+type DeviceChangeCallback = () => void;
 
 class MidiService {
   private access: MIDIAccess | null = null;
   private listeners: MidiMessageCallback[] = [];
+  private deviceChangeListeners: DeviceChangeCallback[] = [];
   private activeInputs: Set<string> = new Set();
 
   async initialize(): Promise<boolean> {
@@ -94,6 +96,22 @@ class MidiService {
     };
   }
 
+  onDeviceChange(callback: DeviceChangeCallback): () => void {
+    this.deviceChangeListeners.push(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      const index = this.deviceChangeListeners.indexOf(callback);
+      if (index > -1) {
+        this.deviceChangeListeners.splice(index, 1);
+      }
+    };
+  }
+
+  private notifyDeviceChange(): void {
+    this.deviceChangeListeners.forEach(listener => listener());
+  }
+
   private setupInputListeners(): void {
     if (!this.access) return;
 
@@ -107,9 +125,13 @@ class MidiService {
           console.log('MIDI device connected:', event.port.name);
           // Auto-enable new devices
           this.enableDevice(event.port.id);
+          // Notify listeners of device change
+          this.notifyDeviceChange();
         } else if (event.port.state === 'disconnected') {
           console.log('MIDI device disconnected:', event.port.name);
           this.activeInputs.delete(event.port.id);
+          // Notify listeners of device change
+          this.notifyDeviceChange();
         }
       }
     };
@@ -150,6 +172,7 @@ class MidiService {
       this.access.onstatechange = null;
     }
     this.listeners = [];
+    this.deviceChangeListeners = [];
     this.activeInputs.clear();
     this.access = null;
   }

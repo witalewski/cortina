@@ -84,6 +84,19 @@ export function useMidi({ onNoteOn, onNoteOff, autoEnable = true }: UseMidiOptio
     };
   }, [isInitialized, onNoteOn, onNoteOff]);
 
+  // Listen for device changes
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const unsubscribe = midiService.onDeviceChange(() => {
+      setDevices(midiService.getDevices());
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [isInitialized]);
+
   useEffect(() => {
     return () => {
       if (isInitialized) {
