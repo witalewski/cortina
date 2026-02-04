@@ -57,12 +57,12 @@ As of initial implementation:
 **Expected result**: Warmer base tone; harder playing reveals more brightness
 
 ### Phase 4: Switch to FMSynth (richer harmonics)
-- [ ] Replace `Tone.Synth` with `Tone.FMSynth` in PolySynth
-- [ ] Configure harmonicity ~2 and modulationIndex ~10-12
-- [ ] Add modulationEnvelope for dynamic timbre (bright attack → mellow sustain)
-- [ ] Consider velocity-dependent modulationIndex (harder = more harmonics)
+- [x] Replace `Tone.Synth` with `Tone.FMSynth` in PolySynth
+- [x] Configure harmonicity ~2 and modulationIndex ~10
+- [x] Add modulationEnvelope for dynamic timbre (bright attack → mellow sustain)
 
 **Expected result**: Richer harmonic content, more complex timbre
+**Status**: ✅ Complete
 
 ### Phase 5: Add Room Ambience (spatial realism)
 - [ ] Add `Tone.Reverb` with subtle settings (decay ~1.5s, wet ~0.2)
@@ -151,3 +151,4 @@ This allows adding `@tonejs/piano` (Salamander Grand Piano samples) as an altern
 | 2026-02-04 | Phase 1 | Improved envelope: attack 0.02s, decay 0.5s, sustain 0.02, release 1s - softer attack, longer decay for fuller sound with continuous decay |
 | 2026-02-04 | Phase 2 | Added velocity support: keyboard input passes velocity (0.7 default), MIDI velocity normalized 0-127→0-1 |
 | 2026-02-04 | Phase 3 | Added lowpass filter + velocity-dependent cutoff: 1500Hz base + (velocity × 3000Hz) - warmer base, brighter when played harder |
+| 2026-02-04 | Phase 4 | Switched to FMSynth: harmonicity 2, modulationIndex 10, with modulationEnvelope - richer, more complex harmonics |

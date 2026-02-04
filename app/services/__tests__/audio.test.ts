@@ -27,6 +27,7 @@ jest.mock('tone', () => {
     now: jest.fn(() => 0),
     PolySynth: mockPolySynth,
     Synth: jest.fn(),
+    FMSynth: jest.fn(),
     Filter: mockFilterConstructor,
     context: {
       state: 'running',

@@ -19,15 +19,26 @@ class AudioEngine {
       rolloff: -24
     });
 
-    this.synth = new Tone.PolySynth(Tone.Synth, {
+    this.synth = new Tone.PolySynth(Tone.FMSynth, {
+      harmonicity: 2,
+      modulationIndex: 10,
       oscillator: {
-        type: 'triangle'
+        type: 'sine'
       },
       envelope: {
         attack: 0.02,
         decay: 0.5,
         sustain: 0.02,
         release: 1
+      },
+      modulation: {
+        type: 'sine'
+      },
+      modulationEnvelope: {
+        attack: 0.01,
+        decay: 0.4,
+        sustain: 0.1,
+        release: 0.5
       }
     }).connect(this.filter);
 
