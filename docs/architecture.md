@@ -58,17 +58,39 @@ User Input → Hook → Service → Audio Output
 ```
 Note Event → audioEngine.noteOn(note, velocity)
                     ↓
-              Tone.js PolySynth
+         Apply velocity curve (vel²)
                     ↓
-              Web Audio API
+    Calculate frequency-dependent filter cutoff
                     ↓
-                 Speaker
+           Tone.js PolySynth (FMSynth)
+                    ↓
+        Lowpass Filter (velocity-controlled)
+                    ↓
+              Reverb (15% wet)
+                    ↓
+            Web Audio API
+                    ↓
+               Speaker
 ```
+
+**Signal chain details:**
+- **FMSynth**: Frequency modulation synthesis for rich harmonics
+- **Filter**: Lowpass, frequency-aware (low notes 4000-6000Hz, high notes 2000-4000Hz)
+- **Reverb**: Room simulation (decay 1.5s, 15% wet)
+- **Velocity curve**: Quadratic (vel²) for natural dynamics
 
 ## Design Decisions
 
 ### Singleton Services
 Audio and MIDI services use singleton pattern to ensure single instance across the app. This prevents multiple audio contexts and MIDI connections.
+
+### Preset-Based Sound Design
+Audio engine uses a `SynthPreset` configuration system:
+- All synth parameters in one exportable object
+- Easy to create alternative sounds
+- Supports future preset switching
+
+See `docs/sound-design.md` for details on current sound design.
 
 ### Hook Abstraction
 React hooks wrap services to provide:

@@ -4,10 +4,10 @@
 
 ### `audioEngine` (audio.ts)
 
-Singleton Tone.js audio engine.
+Singleton Tone.js audio engine with preset-based configuration.
 
 ```typescript
-import { audioEngine } from '@/app/services/audio';
+import { audioEngine, type SynthPreset, WARM_PIANO_PRESET } from '@/app/services/audio';
 
 // Initialize (requires user gesture)
 await audioEngine.initialize();
@@ -24,6 +24,39 @@ audioEngine.getContextState();      // 'running' | 'suspended'
 // Cleanup
 audioEngine.dispose();
 ```
+
+**SynthPreset Interface:**
+```typescript
+interface SynthPreset {
+  name: string;
+  synth: {
+    harmonicity: number;
+    modulationIndex: number;
+    oscillator: { type: string };
+    envelope: { attack, decay, sustain, release };
+    modulation: { type: string };
+    modulationEnvelope: { attack, decay, sustain, release };
+  };
+  filter: {
+    type: 'lowpass' | 'highpass' | 'bandpass';
+    frequency: number;
+    Q: number;
+    rolloff: -12 | -24 | -48 | -96;
+  };
+  filterMapping: {
+    baseCutoffLow: number;    // Hz - for low notes
+    baseCutoffHigh: number;   // Hz - for high notes
+    velocityCutoffRange: number; // Hz - velocity modulation
+  };
+  reverb: {
+    decay: number;
+    preDelay: number;
+    wet: number;
+  };
+}
+```
+
+**Current Preset:** `WARM_PIANO_PRESET` - Optimized for warm, expressive piano sound with velocity-dependent brightness and frequency-aware filtering.
 
 ### `midiService` (midi.ts)
 

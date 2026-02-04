@@ -16,16 +16,18 @@ Transform the synthesizer from a "robotic, thin, metallic" sound to a warmer, mo
 
 ## Current Implementation
 
-As of initial implementation:
-- **Synth**: `Tone.PolySynth(Tone.Synth)` with triangle oscillator
-- **Envelope**: attack 0.005, decay 0.1, sustain 0.3, release 1
-- **Signal chain**: Synth → Destination (no processing)
+**Final optimized configuration (WARM_PIANO_PRESET):**
+- **Synth**: `Tone.PolySynth(Tone.FMSynth)` with harmonicity 2, modulationIndex 12
+- **Envelope**: attack 0.02s, decay 0.7s, sustain 0.02, release 1s
+- **Filter**: Lowpass, frequency-aware (low notes 4000-6000Hz, high notes 2000-4000Hz)
+- **Reverb**: decay 1.5s, 15% wet
+- **Signal chain**: FMSynth → Filter (velocity-controlled) → Reverb → Destination
 
-### Known Issues
-- Thin sound (no filtering)
-- Harsh/clicking attack
-- No spatial effects
-- Static timbre regardless of velocity
+### Key Features
+- **Velocity curve**: Quadratic (vel²) for natural dynamics
+- **Frequency-aware filtering**: Low notes preserve more harmonics
+- **Dynamic brightness**: Filter cutoff responds to velocity
+- **Spatial realism**: Subtle reverb places sound in acoustic space
 
 ---
 
@@ -117,9 +119,16 @@ const cutoff = baseCutoff + (velocity * cutoffRange);
 // Result: soft (vel=0.2) → 2100Hz, hard (vel=1.0) → 4500Hz
 ```
 
-### Architecture for Future Sample Support
+### Architecture for Future Enhancements
 
-The `AudioEngine` will be refactored to support swappable sound sources:
+**Preset System (✅ Implemented):**
+The `AudioEngine` now uses a `SynthPreset` configuration system that centralizes all sound parameters. This makes it easy to:
+- Create alternative sound presets
+- Switch between presets at runtime (future)
+- Document and share configurations
+
+**Sample-Based Piano (Future):**
+The architecture could be extended to support swappable sound sources:
 
 ```typescript
 interface SoundSource {
@@ -130,7 +139,7 @@ interface SoundSource {
 }
 ```
 
-This allows adding `@tonejs/piano` (Salamander Grand Piano samples) as an alternative without changing the effects chain or public API.
+This would allow adding `@tonejs/piano` (Salamander Grand Piano samples) as an alternative without changing the effects chain or public API.
 
 ---
 
@@ -145,8 +154,6 @@ This allows adding `@tonejs/piano` (Salamander Grand Piano samples) as an altern
 
 ## Changelog
 
-*This section will be updated as phases are completed.*
-
 | Date | Phase | Changes |
 |------|-------|---------|
 | 2026-02-04 | Phase 1 | Improved envelope: attack 0.02s, decay 0.7s, sustain 0.02, release 1s - softer attack, longer decay for fuller sound with continuous decay |
@@ -154,4 +161,7 @@ This allows adding `@tonejs/piano` (Salamander Grand Piano samples) as an altern
 | 2026-02-04 | Phase 3 | Added lowpass filter + velocity-dependent cutoff: frequency-aware (low notes 4000-6000Hz, high notes 2000-4000Hz) for richer bass |
 | 2026-02-04 | Phase 4 | Switched to FMSynth: harmonicity 2, modulationIndex 12, with modulationEnvelope - richer, more complex harmonics |
 | 2026-02-04 | Phase 5 | Added reverb: decay 1.5s, wet 0.15 - spatial realism, sound sits in a room |
+| 2026-02-04 | Phase 6 | Refactored to preset system: SynthPreset interface and WARM_PIANO_PRESET constant |
 | 2026-02-04 | Tweaks | Quadratic velocity curve (vel²); frequency-dependent filter for rich bass; adjusted FM/reverb for clarity |
+
+**Result**: Warm, expressive piano-like sound with natural dynamics, rich bass, and spatial depth. All parameters centralized in `WARM_PIANO_PRESET` for easy customization.
