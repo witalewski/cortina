@@ -28,7 +28,7 @@ class AudioEngine {
 
     this.synth = new Tone.PolySynth(Tone.FMSynth, {
       harmonicity: 2,
-      modulationIndex: 10,
+      modulationIndex: 12,
       oscillator: {
         type: 'sine'
       },
@@ -49,14 +49,14 @@ class AudioEngine {
       }
     }).connect(this.filter);
 
-    // Signal chain: Synth → Filter → Reverb (wet 0.2) → Destination
+    // Signal chain: Synth → Filter → Reverb (wet 0.15) → Destination
     this.filter.connect(this.reverb);
     this.reverb.toDestination();
     // Also send dry signal to destination
     this.filter.toDestination();
     
-    // Set reverb wet/dry mix (20% wet)
-    this.reverb.wet.value = 0.2;
+    // Set reverb wet/dry mix (15% wet, reduced from 20% for clarity)
+    this.reverb.wet.value = 0.15;
 
     this.initialized = true;
   }
@@ -75,8 +75,8 @@ class AudioEngine {
     const velocityCurved = normalizedVelocity * normalizedVelocity;
     
     // Velocity-dependent filter cutoff (soft = mellow, hard = bright)
-    const baseCutoff = 1500;  // Hz - warm base tone
-    const cutoffRange = 3000; // Hz - how much brighter at max velocity
+    const baseCutoff = 2000;  // Hz - raised from 1500 for more clarity
+    const cutoffRange = 3000; // Hz - max at 5000Hz for brighter sound
     const cutoff = baseCutoff + (normalizedVelocity * cutoffRange);
     this.filter.frequency.setValueAtTime(cutoff, Tone.now());
     
