@@ -70,13 +70,17 @@ class AudioEngine {
     const noteStr = typeof note === 'number' ? this.midiToNote(note) : note;
     const normalizedVelocity = Math.max(0, Math.min(1, velocity));
     
+    // Apply velocity curve (quadratic) for more natural response
+    // Soft playing is easier, hard playing requires more force
+    const velocityCurved = normalizedVelocity * normalizedVelocity;
+    
     // Velocity-dependent filter cutoff (soft = mellow, hard = bright)
     const baseCutoff = 1500;  // Hz - warm base tone
     const cutoffRange = 3000; // Hz - how much brighter at max velocity
     const cutoff = baseCutoff + (normalizedVelocity * cutoffRange);
     this.filter.frequency.setValueAtTime(cutoff, Tone.now());
     
-    this.synth.triggerAttack(noteStr, undefined, normalizedVelocity);
+    this.synth.triggerAttack(noteStr, undefined, velocityCurved);
   }
 
   noteOff(note: Note | MidiNote): void {

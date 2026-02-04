@@ -107,14 +107,16 @@ describe('AudioEngine', () => {
       const { audioEngine } = require('../audio');
       audioEngine.noteOn('C4', 0.8);
 
-      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('C4', undefined, 0.8);
+      // Velocity is squared: 0.8^2 = 0.64
+      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('C4', undefined, expect.closeTo(0.64, 5));
     });
 
     it('should convert MIDI note to Note string', () => {
       const { audioEngine } = require('../audio');
       audioEngine.noteOn(60, 0.8); // MIDI 60 = C4
 
-      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('C4', undefined, 0.8);
+      // Velocity is squared: 0.8^2 = 0.64
+      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('C4', undefined, expect.closeTo(0.64, 5));
     });
 
     it('should handle different MIDI notes correctly', () => {
@@ -150,7 +152,8 @@ describe('AudioEngine', () => {
     it('should use default velocity if not provided', () => {
       const { audioEngine } = require('../audio');
       audioEngine.noteOn('C4');
-      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('C4', undefined, 0.8);
+      // Default velocity 0.8, squared = 0.64
+      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('C4', undefined, expect.closeTo(0.64, 5));
     });
 
     it('should warn if not initialized', () => {
@@ -237,13 +240,15 @@ describe('AudioEngine', () => {
     it('should handle low MIDI notes', () => {
       const { audioEngine } = require('../audio');
       audioEngine.noteOn(0); // C-1
-      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('C-1', undefined, 0.8);
+      // Default velocity 0.8, squared = 0.64
+      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('C-1', undefined, expect.closeTo(0.64, 5));
     });
 
     it('should handle high MIDI notes', () => {
       const { audioEngine } = require('../audio');
       audioEngine.noteOn(127); // G9
-      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('G9', undefined, 0.8);
+      // Default velocity 0.8, squared = 0.64
+      expect(mockSynth.triggerAttack).toHaveBeenCalledWith('G9', undefined, expect.closeTo(0.64, 5));
     });
   });
 });
