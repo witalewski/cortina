@@ -168,7 +168,7 @@ const ACID_BASS_PRESET: MonoSynthPreset = {
   filter: {
     type: 'lowpass',
     frequency: 300,
-    Q: 8,
+    Q: 4,  // Reduced from 8 for mellower sound
     rolloff: -24
   },
   filterEnvelope: {
@@ -177,10 +177,10 @@ const ACID_BASS_PRESET: MonoSynthPreset = {
     sustain: 0.2,
     release: 0.1,
     baseFrequency: 150,
-    octaves: 3.5
+    octaves: 3.0  // Reduced from 3.5 for less extreme sweep
   },
   filterMapping: {
-    velocityOctaveBoost: 1.5
+    velocityOctaveBoost: 1.2  // Reduced from 1.5 for smoother velocity response
   },
   reverb: {
     decay: 0.5,
