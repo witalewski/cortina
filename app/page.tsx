@@ -1,10 +1,57 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { useAudio } from '@/app/hooks/useAudio';
+import { useMidi } from '@/app/hooks/useMidi';
 import { PianoKeyboard } from '@/app/components/piano';
+import type { Note, MidiNote } from '@/app/types/music';
 
 export default function Home() {
+  const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
+  
   const { isInitialized, isInitializing, error, initialize, playNote, stopNote } = useAudio();
+
+  const handleNotePress = useCallback((note: Note | MidiNote) => {
+    playNote(note);
+    // Track pressed notes for visual feedback
+    const noteStr = typeof note === 'number' ? midiToNote(note) : note;
+    setPressedNotes(prev => new Set(prev).add(noteStr));
+  }, [playNote]);
+
+  const handleNoteRelease = useCallback((note: Note | MidiNote) => {
+    stopNote(note);
+    const noteStr = typeof note === 'number' ? midiToNote(note) : note;
+    setPressedNotes(prev => {
+      const next = new Set(prev);
+      next.delete(noteStr);
+      return next;
+    });
+  }, [stopNote]);
+
+  const {
+    isSupported: midiSupported,
+    isInitialized: midiInitialized,
+    devices: midiDevices,
+    error: midiError,
+    initialize: initializeMidi,
+  } = useMidi({
+    onNoteOn: handleNotePress,
+    onNoteOff: handleNoteRelease,
+    autoEnable: true,
+  });
+
+  const handleStartClick = async () => {
+    console.log('handleStartClick: Starting...');
+    const audioSuccess = await initialize();
+    console.log('handleStartClick: Audio initialized:', audioSuccess);
+    
+    if (audioSuccess) {
+      console.log('handleStartClick: Attempting MIDI initialization...');
+      // Always try to initialize MIDI if the browser might support it
+      const midiSuccess = await initializeMidi();
+      console.log('handleStartClick: MIDI initialized:', midiSuccess);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black p-8">
@@ -24,7 +71,7 @@ export default function Home() {
               Click the button below to initialize the audio engine
             </p>
             <button
-              onClick={initialize}
+              onClick={handleStartClick}
               disabled={isInitializing}
               className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-lg transition-colors text-lg"
             >
@@ -38,23 +85,74 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-center">
-              <p className="text-green-700 dark:text-green-400 font-semibold">
-                ✓ Audio Engine Ready
-              </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <p className="text-green-700 dark:text-green-400 font-semibold">
+                  ✓ Audio Engine Ready
+                </p>
+              </div>
+              
+              <div className={`flex-1 rounded-lg p-4 border ${
+                midiInitialized
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                  : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+              }`}>
+                <p className={`font-semibold ${
+                  midiInitialized
+                    ? 'text-green-700 dark:text-green-400'
+                    : 'text-amber-700 dark:text-amber-400'
+                }`}>
+                  {midiInitialized 
+                    ? `✓ MIDI: ${midiDevices.length} device(s)` 
+                    : `○ MIDI: ${midiSupported ? 'Not Connected' : 'Not Supported'}`
+                  }
+                </p>
+                {midiError && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    {midiError}
+                  </p>
+                )}
+                {!midiInitialized && midiSupported && (
+                  <button
+                    onClick={initializeMidi}
+                    className="mt-2 text-xs px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded"
+                  >
+                    Connect MIDI
+                  </button>
+                )}
+              </div>
             </div>
+
+            {midiInitialized && midiDevices.length > 0 && (
+              <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
+                  Connected MIDI Devices:
+                </h3>
+                <ul className="space-y-1">
+                  {midiDevices.map(device => (
+                    <li key={device.id} className="text-sm text-zinc-600 dark:text-zinc-400">
+                      • {device.name} {device.manufacturer && `(${device.manufacturer})`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div className="flex justify-center py-8">
               <PianoKeyboard
                 startNote={48}
                 numKeys={25}
-                onNotePress={playNote}
-                onNoteRelease={stopNote}
+                onNotePress={handleNotePress}
+                onNoteRelease={handleNoteRelease}
+                pressedNotes={pressedNotes}
               />
             </div>
 
             <div className="text-center text-sm text-zinc-600 dark:text-zinc-400">
               <p>Click the piano keys to play notes</p>
+              {midiInitialized && (
+                <p className="mt-1">Or use your MIDI keyboard</p>
+              )}
               <p className="mt-1">25 keys from C3 to C5</p>
             </div>
           </div>
@@ -62,4 +160,11 @@ export default function Home() {
       </main>
     </div>
   );
+}
+
+function midiToNote(midiNote: MidiNote): Note {
+  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const octave = Math.floor(midiNote / 12) - 1;
+  const noteName = noteNames[midiNote % 12];
+  return `${noteName}${octave}` as Note;
 }

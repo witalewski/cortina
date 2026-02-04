@@ -10,7 +10,7 @@ export function useAudio() {
   const [error, setError] = useState<string | null>(null);
 
   const initialize = async () => {
-    if (isInitialized || isInitializing) return;
+    if (isInitialized || isInitializing) return true;
 
     setIsInitializing(true);
     setError(null);
@@ -18,9 +18,11 @@ export function useAudio() {
     try {
       await audioEngine.initialize();
       setIsInitialized(true);
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to initialize audio');
       console.error('Audio initialization error:', err);
+      return false;
     } finally {
       setIsInitializing(false);
     }
