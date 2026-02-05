@@ -1,31 +1,44 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAudioContext } from '@/app/contexts/AudioContext';
 import { useMidi } from '@/app/hooks/useMidi';
 import { useKeyboard } from '@/app/hooks/useKeyboard';
 import { useIntervalLesson } from '@/app/hooks/useIntervalLesson';
 import { useIntervalPlayback } from '@/app/hooks/useIntervalPlayback';
-import { useIntervalDetectionWithCallback } from '@/app/hooks/useIntervalDetection';
 import { PianoKeyboard } from '@/app/components/piano';
 import { ChallengePrompt } from '@/app/components/learn/ChallengePrompt';
 import { AttemptIndicator } from '@/app/components/learn/AttemptIndicator';
 import { LessonProgress } from '@/app/components/learn/LessonProgress';
 import { LessonSummary } from '@/app/components/learn/LessonSummary';
-import { FeedbackOverlay } from '@/app/components/learn/FeedbackOverlay';
-import { midiToNote } from '@/app/utils/music';
+import { midiToNote, noteToMidi } from '@/app/utils/music';
 import type { Note, MidiNote } from '@/app/types/music';
+import { calculateInterval } from '@/app/types/intervals';
 
 const PIANO_START_NOTE = 48; // C3
 const MAX_ATTEMPTS = 7;
+const FEEDBACK_DISPLAY_TIME = 1000; // 1 second
+
+type LessonMode = 'input' | 'output';
+type FeedbackState = 'idle' | 'correct' | 'incorrect' | 'final-fail';
 
 export default function Lesson1IntervalsPage() {
   const router = useRouter();
+  
+  // Core lesson mode - single source of truth for input control
+  const [lessonMode, setLessonMode] = useState<LessonMode>('output');
+  const [feedbackState, setFeedbackState] = useState<FeedbackState>('idle');
+  
+  // Visual state
   const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
   const [playbackHighlightedNotes, setPlaybackHighlightedNotes] = useState<Set<Note>>(new Set());
-  const [feedbackType, setFeedbackType] = useState<'correct' | 'incorrect' | 'final-fail' | null>(null);
-  const [isProcessingFeedback, setIsProcessingFeedback] = useState(false);
+  
+  // Track user's interval input (first and second note)
+  const [firstNote, setFirstNote] = useState<Note | null>(null);
+  
+  // Ref to track if we've played the initial interval for current challenge
+  const hasPlayedInitialRef = useRef(false);
 
   const {
     isInitialized,
@@ -72,62 +85,85 @@ export default function Lesson1IntervalsPage() {
     onNotePlayed: handleNotePlayed,
   });
 
-  // Handle interval detection
-  const handleIntervalDetected = useCallback(
-    (firstNote: Note, secondNote: Note) => {
-      if (!currentChallenge || isProcessingFeedback) return;
+  // Play interval and return to input mode when done
+  const playIntervalThenInput = useCallback(
+    async (challenge: typeof currentChallenge) => {
+      if (!challenge) return;
+      setLessonMode('output');
+      await playInterval(challenge);
+      setLessonMode('input');
+    },
+    [playInterval]
+  );
 
-      const { correct, isLastAttempt } = submitAnswer(firstNote, secondNote);
+  // Handle when user completes an interval (plays 2 notes)
+  const handleIntervalCompleted = useCallback(
+    (first: Note, second: Note) => {
+      if (!currentChallenge) return;
 
-      setIsProcessingFeedback(true);
+      const firstMidi = noteToMidi(first);
+      const secondMidi = noteToMidi(second);
+      const { interval, direction } = calculateInterval(firstMidi, secondMidi);
+      
+      const correct = 
+        interval?.name === currentChallenge.interval.name &&
+        direction === currentChallenge.direction;
+      
+      const { isLastAttempt } = submitAnswer(first, second);
+
+      // Switch to output mode and show feedback
+      setLessonMode('output');
+      setFirstNote(null);
 
       if (correct) {
-        setFeedbackType('correct');
+        setFeedbackState('correct');
       } else if (isLastAttempt) {
-        setFeedbackType('final-fail');
+        setFeedbackState('final-fail');
       } else {
-        setFeedbackType('incorrect');
+        setFeedbackState('incorrect');
       }
-    },
-    [currentChallenge, submitAnswer, isProcessingFeedback]
-  );
 
-  const { onNotePress: detectNotePress, firstNote, reset: resetDetection } = useIntervalDetectionWithCallback(
-    handleIntervalDetected,
-    isInitialized && !isComplete && !isProcessingFeedback
-  );
-
-  // Handle feedback completion
-  const handleFeedbackComplete = useCallback(() => {
-    setFeedbackType(null);
-    setIsProcessingFeedback(false);
-
-    if (feedbackType === 'correct' || feedbackType === 'final-fail') {
-      // Move to next challenge after a brief delay
+      // After feedback display time
       setTimeout(() => {
-        moveToNextChallenge();
-        resetDetection();
-      }, 100);
-    } else {
-      resetDetection();
-    }
-  }, [feedbackType, moveToNextChallenge, resetDetection]);
+        setFeedbackState('idle');
 
-  // Combined note press handler
+        if (correct || isLastAttempt) {
+          // Move to next challenge
+          hasPlayedInitialRef.current = false;
+          moveToNextChallenge();
+        } else {
+          // Replay interval then return to input mode
+          playIntervalThenInput(currentChallenge);
+        }
+      }, FEEDBACK_DISPLAY_TIME);
+    },
+    [currentChallenge, submitAnswer, moveToNextChallenge, playIntervalThenInput]
+  );
+
+  // Note press handler - completely blocked in output mode
   const handleNotePress = useCallback(
     (note: Note | MidiNote) => {
+      // BLOCK ALL INPUT IN OUTPUT MODE
+      if (lessonMode !== 'input') return;
+
       const noteStr = typeof note === 'number' ? midiToNote(note) : note;
-      
+
       // Play audio
       playNote(note, 0.7);
-      
+
       // Visual feedback
       setPressedNotes((prev) => new Set(prev).add(noteStr));
-      
-      // Detection
-      detectNotePress(noteStr);
+
+      // Interval detection
+      if (!firstNote) {
+        // First note of interval
+        setFirstNote(noteStr);
+      } else {
+        // Second note - complete the interval
+        handleIntervalCompleted(firstNote, noteStr);
+      }
     },
-    [playNote, detectNotePress]
+    [lessonMode, playNote, firstNote, handleIntervalCompleted]
   );
 
   const handleNoteRelease = useCallback(
@@ -143,17 +179,18 @@ export default function Lesson1IntervalsPage() {
     [stopNote]
   );
 
-  // MIDI and keyboard input
+  // MIDI input
   const { initialize: initializeMidi } = useMidi({
     onNoteOn: handleNotePress,
     onNoteOff: handleNoteRelease,
     autoEnable: true,
   });
 
+  // Keyboard input - also respects lesson mode
   useKeyboard({
     onNoteOn: handleNotePress,
     onNoteOff: handleNoteRelease,
-    enabled: isInitialized,
+    enabled: isInitialized && lessonMode === 'input',
     startNote: PIANO_START_NOTE,
   });
 
@@ -164,17 +201,23 @@ export default function Lesson1IntervalsPage() {
     }
   }, [isInitialized, currentChallenge, isComplete, startLesson]);
 
-  // Auto-play interval when challenge starts
+  // Auto-play interval when new challenge starts
   useEffect(() => {
-    if (currentChallenge && attempts === 0) {
-      playInterval(currentChallenge);
+    if (currentChallenge && !hasPlayedInitialRef.current && !isComplete) {
+      hasPlayedInitialRef.current = true;
+      // Use async IIFE to handle the async playback
+      (async () => {
+        await playInterval(currentChallenge);
+        setLessonMode('input');
+      })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentChallenge, attempts]);
+  }, [currentChallenge, isComplete]);
 
   const handleReplay = () => {
-    if (currentChallenge && !isPlaying) {
-      playInterval(currentChallenge);
+    if (currentChallenge && lessonMode === 'input') {
+      setFirstNote(null); // Reset any partial input
+      playIntervalThenInput(currentChallenge);
     }
   };
 
@@ -188,9 +231,8 @@ export default function Lesson1IntervalsPage() {
 
   const handleStartAudio = async () => {
     const audioSuccess = await initialize();
-    
+
     if (audioSuccess) {
-      // Initialize MIDI if browser supports it
       await initializeMidi();
     }
   };
@@ -249,6 +291,8 @@ export default function Lesson1IntervalsPage() {
                 intervalName={shouldRevealName ? currentChallenge.displayName : null}
                 showHint={shouldShowHints}
                 firstNotePlayed={firstNote !== null}
+                isPlaying={isPlaying}
+                feedbackState={feedbackState}
               />
 
               {/* Piano keyboard */}
@@ -268,23 +312,16 @@ export default function Lesson1IntervalsPage() {
 
                 <button
                   onClick={handleReplay}
-                  disabled={isPlaying}
+                  disabled={lessonMode === 'output'}
                   className="rounded-lg bg-blue-600 px-6 py-2 font-semibold text-white shadow-md transition-colors hover:bg-blue-700 disabled:bg-blue-400"
                 >
-                  {isPlaying ? 'Playing...' : '🔊 Replay'}
+                  {lessonMode === 'output' && isPlaying ? 'Playing...' : '🔊 Replay'}
                 </button>
               </div>
             </div>
           </>
         ) : null}
       </div>
-
-      {/* Feedback overlay */}
-      <FeedbackOverlay
-        show={feedbackType !== null}
-        type={feedbackType || 'correct'}
-        onComplete={handleFeedbackComplete}
-      />
     </div>
   );
 }
