@@ -142,42 +142,25 @@ export function checkChordMatch(
 }
 
 /**
- * Generate a pool of chord challenges from available root notes.
- * Uses root notes C3, D3, E3, F3, G3, A3, B3 (white keys in lower octave)
- * and C4, D4, E4 (white keys in middle octave) for variety.
+ * Generate a pool of chord challenges.
+ * Root note is always C4 (MIDI 60).
  */
 export function generateChordPool(): ChordChallenge[] {
   const pool: ChordChallenge[] = [];
+  const rootMidi: MidiNote = 60; // C4
+  const rootNote = midiToNote(rootMidi);
 
-  // Root notes: white keys from C3 to E4 (MIDI 48-64)
-  const rootNotes: MidiNote[] = [
-    48, // C3
-    50, // D3
-    52, // E3
-    53, // F3
-    55, // G3
-    57, // A3
-    59, // B3
-    60, // C4
-    62, // D4
-    64, // E4
-  ];
+  for (const chord of Object.values(CHORDS)) {
+    const { notes, midiNotes } = calculateChordNotes(rootMidi, chord);
 
-  for (const rootMidi of rootNotes) {
-    const rootNote = midiToNote(rootMidi);
-
-    for (const chord of Object.values(CHORDS)) {
-      const { notes, midiNotes } = calculateChordNotes(rootMidi, chord);
-
-      pool.push({
-        chord,
-        rootNote,
-        rootMidi,
-        notes,
-        midiNotes,
-        displayName: getChordDisplayName(rootNote, chord),
-      });
-    }
+    pool.push({
+      chord,
+      rootNote,
+      rootMidi,
+      notes,
+      midiNotes,
+      displayName: getChordDisplayName(rootNote, chord),
+    });
   }
 
   return pool;

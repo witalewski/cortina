@@ -11,7 +11,7 @@ import { generateChordPool, selectRandomChallenges, checkChordMatch } from '@/ap
 import { noteToMidi } from '@/app/utils/music';
 import type { Note } from '@/app/types/music';
 
-const CHALLENGES_PER_LESSON = 5;
+const CHALLENGES_PER_LESSON = 4;
 const MAX_ATTEMPTS = 7;
 const REVEAL_NAME_AFTER_ATTEMPTS = 3;
 const SHOW_HINTS_AFTER_ATTEMPTS = 4;
