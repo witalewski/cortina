@@ -1,197 +1,31 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
-import { useAudio } from '@/app/hooks/useAudio';
-import { useMidi } from '@/app/hooks/useMidi';
-import { useKeyboard } from '@/app/hooks/useKeyboard';
-import { useMobilePortrait } from '@/app/hooks/useMobilePortrait';
-import { PianoKeyboard } from '@/app/components/piano';
-import { StatusIndicator } from '@/app/components/ui/StatusIndicator';
-import { InstrumentSelector } from '@/app/components/ui/InstrumentSelector';
-import { midiToNote, getOptimalStartNote } from '@/app/utils/music';
-import type { Note, MidiNote } from '@/app/types/music';
+import { useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-export default function Home() {
-  const [pressedNotes, setPressedNotes] = useState<Set<Note>>(new Set());
-  const [startNote, setStartNote] = useState<MidiNote>(48); // Default: C3
-  const lastMidiNoteSource = useRef<'midi' | 'other'>('other');
-  const isMobilePortrait = useMobilePortrait();
-  
-  const { isInitialized, isInitializing, error, initialize, playNote, stopNote, setPreset, presetName, isLoadingPreset, presets } = useAudio();
+export default function HomeRedirect() {
+  const router = useRouter();
 
-  const handleNotePress = useCallback((note: Note | MidiNote, velocity?: number, source: 'midi' | 'keyboard' | 'click' = 'keyboard') => {
-    playNote(note, velocity);
-    
-    // Track pressed notes for visual feedback
-    const noteStr = typeof note === 'number' ? midiToNote(note) : note;
-    setPressedNotes(prev => new Set(prev).add(noteStr));
-
-    // Only adjust range for MIDI input
-    if (source === 'midi') {
-      const midiNote = typeof note === 'number' ? note : 0; // We'll only get numbers from MIDI
-      
-      // Check if note is outside current range
-      const currentEnd = startNote + 24; // 25 keys (0-24 offset)
-      if (midiNote < startNote || midiNote > currentEnd) {
-        const newStart = getOptimalStartNote(midiNote);
-        setStartNote(newStart);
-      }
-    }
-  }, [playNote, startNote]);
-
-  const handleNoteRelease = useCallback((note: Note | MidiNote) => {
-    stopNote(note);
-    const noteStr = typeof note === 'number' ? midiToNote(note) : note;
-    setPressedNotes(prev => {
-      const next = new Set(prev);
-      next.delete(noteStr);
-      return next;
-    });
-  }, [stopNote]);
-
-  // MIDI input - mark as MIDI source
-  const handleMidiNoteOn = useCallback((note: MidiNote, velocity: number) => {
-    handleNotePress(note, velocity, 'midi');
-  }, [handleNotePress]);
-
-  // Keyboard/click input - don't adjust range
-  const handleLocalNotePress = useCallback((note: Note | MidiNote, velocity?: number) => {
-    handleNotePress(note, velocity, 'keyboard');
-  }, [handleNotePress]);
-
-  const {
-    isSupported: midiSupported,
-    isInitialized: midiInitialized,
-    devices: midiDevices,
-    error: midiError,
-    initialize: initializeMidi,
-  } = useMidi({
-    onNoteOn: handleMidiNoteOn,
-    onNoteOff: handleNoteRelease,
-    autoEnable: true,
-  });
-
-  // Computer keyboard input - follows visible range
-  useKeyboard({
-    onNoteOn: handleLocalNotePress,
-    onNoteOff: handleNoteRelease,
-    enabled: isInitialized,
-    startNote,
-  });
-
-  const handleStartClick = async () => {
-    const audioSuccess = await initialize();
-    
-    if (audioSuccess) {
-      // Always try to initialize MIDI if the browser might support it
-      await initializeMidi();
-    }
-  };
+  useEffect(() => {
+    router.replace('/play');
+  }, [router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-black p-8">
-      <main className="relative w-full max-w-4xl bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
-            Cortina 🎹
-          </h1>
-          <p className="text-zinc-600 dark:text-zinc-400">
-            Musical Skills Training App
-          </p>
-        </div>
-
-        {!isInitialized ? (
-          <div className="text-center space-y-4">
-            <p className="text-zinc-700 dark:text-zinc-300 mb-6">
-              Click the button below to initialize the audio engine
-            </p>
-            <button
-              onClick={handleStartClick}
-              disabled={isInitializing}
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg shadow-lg transition-colors text-lg"
-            >
-              {isInitializing ? 'Initializing...' : 'Start Audio Engine'}
-            </button>
-            {error && (
-              <p className="text-red-600 dark:text-red-400 mt-4">
-                Error: {error}
-              </p>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Compact instrument selector - top-right corner */}
-            <div className="absolute top-8 right-8">
-              <InstrumentSelector
-                currentPresetName={presetName}
-                isLoading={isLoadingPreset}
-                presets={[
-                  { preset: presets.SAMPLED_PIANO_PRESET, category: 'sampled' },
-                  { preset: presets.WARM_PIANO_PRESET, category: 'synth' },
-                  { preset: presets.BASIC_SYNTH_PRESET, category: 'synth' },
-                  { preset: presets.ACID_BASS_PRESET, category: 'synth' },
-                ]}
-                onPresetChange={setPreset}
-              />
-            </div>
-
-            <div className={`space-y-8 ${isMobilePortrait ? 'flex flex-col items-center justify-center min-h-[60vh]' : ''}`}>
-              <div className="flex justify-center items-center">
-                <PianoKeyboard
-                  startNote={startNote}
-                  numKeys={25}
-                  onNotePress={handleLocalNotePress}
-                  onNoteRelease={handleNoteRelease}
-                  pressedNotes={pressedNotes}
-                  rotateForMobile={isMobilePortrait}
-                />
-              </div>
-
-              {/* Hide computer keyboard instructions on mobile portrait */}
-              {!isMobilePortrait && (
-                <div className="text-center text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
-                  <p className="font-semibold">How to Play:</p>
-                  <p>🖱️ Click piano keys with your mouse</p>
-                  {midiInitialized && <p>🎹 Play with your MIDI keyboard</p>}
-                  <p>⌨️ Use computer keyboard:</p>
-                  <div className="flex justify-center gap-8 mt-2 text-xs font-mono">
-                    <div>
-                      <p className="text-zinc-500 dark:text-zinc-500 mb-1">White keys</p>
-                      <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">A S D F G H J K L ; &apos;</p>
-                    </div>
-                    <div>
-                      <p className="text-zinc-500 dark:text-zinc-500 mb-1">Black keys</p>
-                      <p className="bg-zinc-100 dark:bg-zinc-700 px-3 py-1 rounded">W E T Y U O P [</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-2">
-                    Range: {midiToNote(startNote)} to {midiToNote((startNote + 24) as MidiNote)}
-                  </p>
-                </div>
-              )}
-
-              {/* Simplified mobile instructions */}
-              {isMobilePortrait && (
-                <div className="text-center text-xs text-zinc-500 dark:text-zinc-500">
-                  <p>Tap keys to play • Range: {midiToNote(startNote)} - {midiToNote((startNote + 24) as MidiNote)}</p>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </main>
-
-      {/* Compact status indicator - fixed bottom-right */}
-      {isInitialized && (
-        <StatusIndicator
-          audioReady={isInitialized}
-          midiInitialized={midiInitialized}
-          midiSupported={midiSupported}
-          midiDevices={midiDevices}
-          midiError={midiError}
-          onMidiConnect={initializeMidi}
-        />
-      )}
+    <div className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-100">
+      <div className="text-center">
+        <p className="text-sm uppercase tracking-[0.3em] text-zinc-400">
+          Cortina
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold">Loading Play Mode</h1>
+        <p className="mt-4 text-sm text-zinc-400">
+          If you are not redirected automatically,{' '}
+          <Link href="/play" className="text-zinc-100 underline">
+            continue to Play
+          </Link>
+          .
+        </p>
+      </div>
     </div>
   );
 }

@@ -23,7 +23,7 @@ export function StatusIndicator({
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className="fixed bottom-4 right-4 z-40">
+    <div className="fixed bottom-4 right-4 z-30">
       <div className="relative">
         {/* Main compact status */}
         <button
