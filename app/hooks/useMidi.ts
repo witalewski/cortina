@@ -11,9 +11,10 @@ interface UseMidiOptions {
 }
 
 export function useMidi({ onNoteOn, onNoteOff, autoEnable = true }: UseMidiOptions = {}) {
-  const [isSupported, setIsSupported] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [devices, setDevices] = useState<MidiDevice[]>([]);
+  // Sync initial state with midiService (handles remount after navigation)
+  const [isSupported, setIsSupported] = useState(() => midiService.isSupported());
+  const [isInitialized, setIsInitialized] = useState(() => midiService.isInitialized());
+  const [devices, setDevices] = useState<MidiDevice[]>(() => midiService.getDevices());
   const [error, setError] = useState<string | null>(null);
 
   const initialize = useCallback(async () => {
@@ -90,13 +91,8 @@ export function useMidi({ onNoteOn, onNoteOff, autoEnable = true }: UseMidiOptio
     };
   }, [isInitialized]);
 
-  useEffect(() => {
-    return () => {
-      if (isInitialized) {
-        midiService.dispose();
-      }
-    };
-  }, [isInitialized]);
+  // Note: We don't dispose midiService on unmount anymore
+  // MIDI state should persist across navigation like audio does
 
   return {
     isSupported,

@@ -23,6 +23,9 @@ class MidiService {
   private activeInputs: Set<string> = new Set();
 
   async initialize(): Promise<boolean> {
+    // Already initialized - return true
+    if (this.access) return true;
+
     if (!navigator.requestMIDIAccess) {
       console.warn('MidiService: Web MIDI API not supported in this browser');
       return false;
@@ -40,6 +43,10 @@ class MidiService {
 
   isSupported(): boolean {
     return 'requestMIDIAccess' in navigator;
+  }
+
+  isInitialized(): boolean {
+    return this.access !== null;
   }
 
   getDevices(): MidiDevice[] {

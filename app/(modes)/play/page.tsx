@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useAudio } from '@/app/hooks/useAudio';
+import { useAudioContext } from '@/app/contexts/AudioContext';
 import { useMidi } from '@/app/hooks/useMidi';
 import { useKeyboard } from '@/app/hooks/useKeyboard';
 import { useMobilePortrait } from '@/app/hooks/useMobilePortrait';
@@ -16,6 +16,7 @@ export default function PlayPage() {
   const [startNote, setStartNote] = useState<MidiNote>(48); // Default: C3
   const isMobilePortrait = useMobilePortrait();
 
+  // Use context instead of hook - state persists across navigation
   const {
     isInitialized,
     isInitializing,
@@ -27,7 +28,7 @@ export default function PlayPage() {
     presetName,
     isLoadingPreset,
     presets,
-  } = useAudio();
+  } = useAudioContext();
 
   const handleNotePress = useCallback(
     (
