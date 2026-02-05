@@ -17,6 +17,12 @@ export default function LearnPage() {
           description="Learn to recognize and play musical intervals. Practice perfect 4ths, 5ths, octaves, thirds, and more."
           href="/learn/lesson-1-intervals"
         />
+        <LessonCard
+          number={2}
+          title="Basic Chords"
+          description="Learn to recognize and play basic chords. Practice major, minor, diminished, and augmented triads."
+          href="/learn/lesson-2-chords"
+        />
       </div>
     </div>
   );

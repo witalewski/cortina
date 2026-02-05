@@ -1,20 +1,20 @@
-export type FeedbackState = 'idle' | 'correct' | 'incorrect' | 'final-fail';
-
-interface ChallengePromptProps {
-  intervalName: string | null;
+interface ChordChallengePromptProps {
+  chordName: string | null;
   showHint: boolean;
-  firstNotePlayed: boolean;
+  notesPlayedCount: number;
+  totalNotes: number;
   isPlaying: boolean;
-  feedbackState: FeedbackState;
+  feedbackState: 'idle' | 'correct' | 'incorrect' | 'final-fail';
 }
 
-export function ChallengePrompt({
-  intervalName,
+export function ChordChallengePrompt({
+  chordName,
   showHint,
-  firstNotePlayed,
+  notesPlayedCount,
+  totalNotes,
   isPlaying,
   feedbackState,
-}: ChallengePromptProps) {
+}: ChordChallengePromptProps) {
   // Feedback state takes priority
   if (feedbackState === 'correct') {
     return (
@@ -61,24 +61,24 @@ export function ChallengePrompt({
       <h2 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
         {isPlaying ? (
           '🔊 Listen...'
-        ) : intervalName ? (
-          `Play the ${intervalName}`
+        ) : chordName ? (
+          `Play the ${chordName} chord`
         ) : (
-          'Repeat this interval'
+          'Repeat this chord'
         )}
       </h2>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
         {isPlaying ? (
-          'Wait for the interval to finish playing'
-        ) : firstNotePlayed ? (
-          'Now play the second note'
+          'Wait for the chord to finish playing'
+        ) : notesPlayedCount > 0 ? (
+          `${notesPlayedCount} of ${totalNotes} notes played`
         ) : (
-          'Start by playing the first note (C4)'
+          `Play all ${totalNotes} notes of the chord`
         )}
       </p>
       {showHint && !isPlaying && (
         <p className="mt-3 text-xs italic text-blue-600 dark:text-blue-400">
-          💡 Watch the highlighted keys when you replay the interval
+          💡 Watch the highlighted keys when you replay the chord
         </p>
       )}
     </div>
