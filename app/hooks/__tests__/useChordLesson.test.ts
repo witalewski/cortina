@@ -23,7 +23,7 @@ describe('useChordLesson', () => {
   });
 
   describe('startLesson', () => {
-    it('should generate 5 challenges', () => {
+    it('should generate 4 challenges', () => {
       const { result } = renderHook(() => useChordLesson());
 
       act(() => {
@@ -213,15 +213,15 @@ describe('useChordLesson', () => {
       expect(result.current.currentChallenge).not.toBe(firstChallenge);
     });
 
-    it('should mark lesson complete after 5 challenges', () => {
+    it('should mark lesson complete after 4 challenges', () => {
       const { result } = renderHook(() => useChordLesson());
 
       act(() => {
         result.current.startLesson();
       });
 
-      // Complete all 5 challenges
-      for (let i = 0; i < 5; i++) {
+      // Complete all 4 challenges
+      for (let i = 0; i < 4; i++) {
         const challenge = result.current.currentChallenge!;
         act(() => {
           result.current.submitAnswer(challenge.notes);
@@ -241,11 +241,11 @@ describe('useChordLesson', () => {
         result.current.startLesson();
       });
 
-      // Answer 3 correctly, 2 incorrectly (max attempts)
-      for (let i = 0; i < 5; i++) {
+      // Answer 2 correctly, 2 incorrectly (max attempts)
+      for (let i = 0; i < 4; i++) {
         const challenge = result.current.currentChallenge!;
         act(() => {
-          if (i < 3) {
+          if (i < 2) {
             // Correct answer
             result.current.submitAnswer(challenge.notes);
           } else {
@@ -258,8 +258,8 @@ describe('useChordLesson', () => {
         });
       }
 
-      expect(result.current.score?.correctCount).toBe(3);
-      expect(result.current.score?.totalChallenges).toBe(5);
+      expect(result.current.score?.correctCount).toBe(2);
+      expect(result.current.score?.totalChallenges).toBe(4);
     });
 
     it('should track results per challenge', () => {
@@ -270,7 +270,7 @@ describe('useChordLesson', () => {
       });
 
       // Complete all challenges correctly on first try
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 4; i++) {
         const challenge = result.current.currentChallenge!;
         act(() => {
           result.current.submitAnswer(challenge.notes);
@@ -278,7 +278,7 @@ describe('useChordLesson', () => {
         });
       }
 
-      expect(result.current.score?.results).toHaveLength(5);
+      expect(result.current.score?.results).toHaveLength(4);
       result.current.score?.results.forEach(r => {
         expect(r.succeeded).toBe(true);
         expect(r.attemptsCount).toBe(1);

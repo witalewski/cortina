@@ -143,35 +143,27 @@ describe('chords', () => {
   });
 
   describe('generateChordPool', () => {
-    it('should generate 40 challenges (10 root notes × 4 chord types)', () => {
+    it('should generate 4 challenges (1 root note × 4 chord types)', () => {
       const pool = generateChordPool();
-      expect(pool).toHaveLength(40);
+      expect(pool).toHaveLength(4);
     });
 
-    it('should have 4 challenges for each root note', () => {
+    it('should have all 4 chord types for C4 root note', () => {
       const pool = generateChordPool();
-      const c3Chords = pool.filter(c => c.rootNote === 'C3');
-      expect(c3Chords).toHaveLength(4);
+      const c4Chords = pool.filter(c => c.rootNote === 'C4');
+      expect(c4Chords).toHaveLength(4);
 
-      const chordTypes = c3Chords.map(c => c.chord.name).sort();
+      const chordTypes = c4Chords.map(c => c.chord.name).sort();
       expect(chordTypes).toEqual(['augmented', 'diminished', 'major', 'minor']);
     });
 
-    it('should use white keys from C3 to E4 as root notes', () => {
+    it('should use only C4 as root note', () => {
       const pool = generateChordPool();
       const rootNotes = new Set(pool.map(c => c.rootNote));
 
-      // Expected: C3, D3, E3, F3, G3, A3, B3, C4, D4, E4
-      expect(rootNotes).toContain('C3');
-      expect(rootNotes).toContain('D3');
-      expect(rootNotes).toContain('E3');
-      expect(rootNotes).toContain('F3');
-      expect(rootNotes).toContain('G3');
-      expect(rootNotes).toContain('A3');
-      expect(rootNotes).toContain('B3');
+      // Expected: only C4
+      expect(rootNotes.size).toBe(1);
       expect(rootNotes).toContain('C4');
-      expect(rootNotes).toContain('D4');
-      expect(rootNotes).toContain('E4');
     });
 
     it('should have correct notes for each chord', () => {
@@ -182,10 +174,10 @@ describe('chords', () => {
       expect(c4maj?.notes).toEqual(['C4', 'E4', 'G4']);
       expect(c4maj?.midiNotes).toEqual([60, 64, 67]);
 
-      // Find G3 minor
-      const g3min = pool.find(c => c.rootNote === 'G3' && c.chord.name === 'minor');
-      expect(g3min?.notes).toEqual(['G3', 'A#3', 'D4']);
-      expect(g3min?.midiNotes).toEqual([55, 58, 62]);
+      // Find C4 minor
+      const c4min = pool.find(c => c.rootNote === 'C4' && c.chord.name === 'minor');
+      expect(c4min?.notes).toEqual(['C4', 'D#4', 'G4']);
+      expect(c4min?.midiNotes).toEqual([60, 63, 67]);
     });
 
     it('should have correct display names', () => {
@@ -194,32 +186,32 @@ describe('chords', () => {
       const c4maj = pool.find(c => c.rootNote === 'C4' && c.chord.name === 'major');
       expect(c4maj?.displayName).toBe('C Major');
 
-      const d3min = pool.find(c => c.rootNote === 'D3' && c.chord.name === 'minor');
-      expect(d3min?.displayName).toBe('D Minor');
+      const c4min = pool.find(c => c.rootNote === 'C4' && c.chord.name === 'minor');
+      expect(c4min?.displayName).toBe('C Minor');
     });
   });
 
   describe('selectRandomChallenges', () => {
     it('should select the requested number of challenges', () => {
       const pool = generateChordPool();
-      const selected = selectRandomChallenges(pool, 5);
-      expect(selected).toHaveLength(5);
+      const selected = selectRandomChallenges(pool, 3);
+      expect(selected).toHaveLength(3);
     });
 
     it('should return unique challenges (no duplicates)', () => {
       const pool = generateChordPool();
-      const selected = selectRandomChallenges(pool, 5);
+      const selected = selectRandomChallenges(pool, 3);
 
       const uniqueKeys = new Set(
         selected.map(c => `${c.rootNote}-${c.chord.name}`)
       );
-      expect(uniqueKeys.size).toBe(5);
+      expect(uniqueKeys.size).toBe(3);
     });
 
     it('should handle requesting more than pool size', () => {
       const pool = generateChordPool();
       const selected = selectRandomChallenges(pool, 100);
-      expect(selected).toHaveLength(40); // Pool size
+      expect(selected).toHaveLength(4); // Pool size
     });
 
     it('should return different challenges on multiple calls (randomness)', () => {
