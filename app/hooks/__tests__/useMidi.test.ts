@@ -6,6 +6,7 @@ import { midiService } from '@/app/services/midi';
 jest.mock('@/app/services/midi', () => ({
   midiService: {
     isSupported: jest.fn(),
+    isInitialized: jest.fn(),
     initialize: jest.fn(),
     getDevices: jest.fn(),
     enableDevice: jest.fn(),
@@ -25,6 +26,9 @@ describe('useMidi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUnsubscribe = jest.fn();
+    (midiService.isSupported as jest.Mock).mockReturnValue(false);
+    (midiService.isInitialized as jest.Mock).mockReturnValue(false);
+    (midiService.getDevices as jest.Mock).mockReturnValue([]);
     (midiService.onMessage as jest.Mock).mockReturnValue(mockUnsubscribe);
     (midiService.onDeviceChange as jest.Mock).mockReturnValue(mockUnsubscribe);
     
@@ -205,7 +209,7 @@ describe('useMidi', () => {
     (midiService.initialize as jest.Mock).mockResolvedValue(true);
     (midiService.getDevices as jest.Mock).mockReturnValue([]);
 
-    let messageCallback: (message: any) => void = () => {};
+    let messageCallback: (message: { type: string; note: number; velocity: number }) => void = () => {};
     (midiService.onMessage as jest.Mock).mockImplementation((cb) => {
       messageCallback = cb;
       return mockUnsubscribe;
@@ -232,7 +236,7 @@ describe('useMidi', () => {
     (midiService.initialize as jest.Mock).mockResolvedValue(true);
     (midiService.getDevices as jest.Mock).mockReturnValue([]);
 
-    let messageCallback: (message: any) => void = () => {};
+    let messageCallback: (message: { type: string; note: number; velocity: number }) => void = () => {};
     (midiService.onMessage as jest.Mock).mockImplementation((cb) => {
       messageCallback = cb;
       return mockUnsubscribe;
@@ -299,7 +303,7 @@ describe('useMidi', () => {
     expect(result.current.devices[0].name).toBe('New Device');
   });
 
-  it('should dispose MIDI service on unmount if initialized', async () => {
+  it('should NOT dispose MIDI service on unmount (persists across navigation)', async () => {
     (midiService.isSupported as jest.Mock).mockReturnValue(true);
     (midiService.initialize as jest.Mock).mockResolvedValue(true);
     (midiService.getDevices as jest.Mock).mockReturnValue([]);
@@ -312,7 +316,8 @@ describe('useMidi', () => {
 
     unmount();
 
-    expect(midiService.dispose).toHaveBeenCalledTimes(1);
+    // MIDI state persists across navigation - dispose should NOT be called
+    expect(midiService.dispose).not.toHaveBeenCalled();
   });
 
   it('should not dispose if never initialized', () => {

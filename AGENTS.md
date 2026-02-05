@@ -11,13 +11,19 @@ Cortina is a musical skills training application built with Next.js 16, React 19
 - **Piano UI**: 25-key interactive keyboard (C3-C5)
 - **MIDI Input**: Web MIDI API integration (Chrome/Edge only)
 - **Keyboard Input**: Computer keyboard mapping
-- **Testing**: Jest with 16+ unit tests
+- **Learn Mode**: First lesson available (Intervals)
+- **Testing**: Jest with 100+ unit tests
+
+### Learn Mode (NEW)
+- `/learn` - Lesson list
+- `/learn/lesson-1-intervals` - Interval recognition lesson
+- LessonMode architecture: `'input'` (user plays) vs `'output'` (system plays)
+- See [docs/lessons.md](./docs/lessons.md) for lesson architecture
 
 ### Future Plans
-- Musical training exercises
-- Note recognition games
-- Rhythm training
+- More lessons (scales, chords, rhythm)
 - Progress tracking
+- Difficulty levels
 
 ## Quick Start
 
@@ -37,19 +43,27 @@ npm run lint         # ESLint
 | [docs/patterns.md](./docs/patterns.md) | Writing new code, code style |
 | [docs/troubleshooting.md](./docs/troubleshooting.md) | Something not working |
 | [docs/music-theory.md](./docs/music-theory.md) | Working with MIDI, notes, piano layout |
+| [docs/lessons.md](./docs/lessons.md) | Lesson system architecture (LessonMode) |
 
 ## Key Files
 
 ```
 app/
-├── page.tsx                 # Main synth page
-├── services/audio.ts        # Tone.js audio engine
-├── services/midi.ts         # Web MIDI API wrapper
-├── hooks/useAudio.ts        # Audio React hook
-├── hooks/useMidi.ts         # MIDI React hook
-├── hooks/useKeyboard.ts     # Keyboard input hook
-├── components/piano/        # Piano UI components
-└── types/music.ts           # Music types
+├── page.tsx                     # Main synth page (Play mode)
+├── services/audio/              # Tone.js audio engine
+├── services/midi.ts             # Web MIDI API wrapper
+├── hooks/useAudio.ts            # Audio React hook
+├── hooks/useMidi.ts             # MIDI React hook
+├── hooks/useKeyboard.ts         # Keyboard input hook
+├── components/piano/            # Piano UI components
+├── types/music.ts               # Music types
+├── types/intervals.ts           # Interval types & utilities
+├── (modes)/learn/               # Learn mode pages
+│   ├── page.tsx                 # Lesson list
+│   └── lesson-1-intervals/      # Intervals lesson
+├── hooks/useIntervalLesson.ts   # Lesson state management
+├── hooks/useIntervalPlayback.ts # Interval playback logic
+└── components/learn/            # Lesson UI components
 ```
 
 ## Critical Patterns

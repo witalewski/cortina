@@ -104,3 +104,88 @@ Piano keyboard is split into:
 - `PianoKeyboard` - layout logic and key arrangement
 
 This allows future customization (different key sizes, layouts, etc).
+
+## Learn Mode Architecture
+
+Learn mode provides interactive music training exercises. The key architectural concept is the **LessonMode** state machine.
+
+### Directory Structure (Learn Mode)
+
+```
+app/
+├── (modes)/learn/
+│   ├── page.tsx                    # Lesson list
+│   └── lesson-1-intervals/
+│       └── page.tsx                # Intervals lesson
+├── components/learn/
+│   ├── index.ts                    # Barrel export
+│   ├── ChallengePrompt.tsx         # Instruction/feedback display
+│   ├── AttemptIndicator.tsx        # Visual attempt counter
+│   ├── LessonProgress.tsx          # 1/5, 2/5, etc.
+│   ├── LessonSummary.tsx           # End-of-lesson score
+│   └── LessonCard.tsx              # Lesson list item
+├── hooks/
+│   ├── useIntervalLesson.ts        # Lesson state management
+│   └── useIntervalPlayback.ts      # Interval audio playback
+└── types/
+    └── intervals.ts                # Interval types & utilities
+```
+
+### LessonMode State Machine
+
+The LessonMode is the single source of truth for input control:
+
+```
+type LessonMode = 'input' | 'output';
+```
+
+- **INPUT mode**: User can play piano (keyboard, MIDI, mouse, touch)
+- **OUTPUT mode**: System is playing or showing feedback (all input blocked)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     STATE TRANSITIONS                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  [Challenge Start]                                               │
+│       ↓                                                          │
+│  OUTPUT ──(play interval)──► INPUT ──(user plays 2nd note)──►   │
+│       ↑                                                          │
+│       │                  ┌──────────────────────────────┐        │
+│       │                  │  OUTPUT (show feedback)      │        │
+│       │                  └──────────────────────────────┘        │
+│       │                           │                              │
+│       │         correct/max fails │          wrong               │
+│       │                  ↓        │             │                │
+│       │         [Next Challenge]  └──(replay)───┘                │
+│       │                  │                                       │
+│       └──────────────────┘                                       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Implementation Pattern
+
+```typescript
+// All input goes through one handler
+const handleNotePress = useCallback((note: Note) => {
+  if (lessonMode !== 'input') return; // CRITICAL: Block when not in input mode
+  // ... process note
+}, [lessonMode]);
+
+// Connect to ALL input sources
+useKeyboard({ onNoteOn: handleNotePress });
+useMidi({ onNoteOn: handleNotePress });
+<PianoKeyboard onNotePress={handleNotePress} />
+```
+
+This ensures consistent behavior across all input methods.
+
+### Progressive Hints
+
+Lessons support progressive difficulty reduction:
+- Attempts 1-3: No hints
+- Attempts 4+: Reveal interval name
+- Attempts 5+: Show visual key highlights
+
+See [docs/lessons.md](./lessons.md) for full lesson system documentation.

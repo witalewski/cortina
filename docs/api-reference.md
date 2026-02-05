@@ -272,3 +272,165 @@ interface MidiMessage {
   channel: number;
 }
 ```
+
+---
+
+## Interval Types (app/types/intervals.ts)
+
+```typescript
+type IntervalName = 'unison' | 'minor 2nd' | 'major 2nd' | 'minor 3rd' | 
+                    'major 3rd' | 'perfect 4th' | 'diminished 5th' | 
+                    'perfect 5th' | 'perfect octave';
+
+type IntervalDirection = 'ascending' | 'descending' | 'none';
+
+interface Interval {
+  name: IntervalName;
+  semitones: number;
+  shortName: string;
+}
+
+interface IntervalChallenge {
+  interval: Interval;
+  direction: IntervalDirection;
+  rootNote: Note;
+  rootMidi: MidiNote;
+  targetNote: Note;
+  targetMidi: MidiNote;
+  displayName: string;
+}
+
+// INTERVALS constant - all 9 intervals with semitone mappings
+const INTERVALS: Record<IntervalName, Interval>;
+```
+
+### Interval Utilities
+
+```typescript
+import { 
+  calculateTargetNote,
+  calculateInterval,
+  generateIntervalPool,
+  selectRandomChallenges,
+  getIntervalDisplayName
+} from '@/app/types/intervals';
+
+// Calculate target note from root + interval + direction
+calculateTargetNote(rootMidi: number, semitones: number, direction: IntervalDirection)
+// Returns: { midi: number, note: Note }
+
+// Detect interval from two MIDI notes
+calculateInterval(firstMidi: number, secondMidi: number)
+// Returns: { interval: Interval, direction: IntervalDirection } | null
+
+// Generate all possible interval challenges (17 total)
+generateIntervalPool(rootMidi?: number)
+// Returns: IntervalChallenge[]
+
+// Select N unique random challenges from pool
+selectRandomChallenges(pool: IntervalChallenge[], count: number)
+// Returns: IntervalChallenge[]
+
+// Format interval for display
+getIntervalDisplayName(interval: Interval, direction: IntervalDirection)
+// Returns: string (e.g., "Perfect 5th (ascending)")
+```
+
+---
+
+## Lesson Hooks
+
+### `useIntervalLesson()`
+
+Manages lesson state for interval training.
+
+```typescript
+const {
+  currentChallenge,      // IntervalChallenge | null
+  challengeIndex,        // number (0-4)
+  attempts,              // number (0-7)
+  isComplete,            // boolean
+  score,                 // LessonScore | null
+  shouldRevealName,      // boolean (true after 3 fails)
+  shouldShowHints,       // boolean (true after 4 fails)
+  startLesson,           // () => void
+  submitAnswer,          // (rootNote: Note, targetNote: Note) => { correct, isLastAttempt }
+  moveToNextChallenge,   // () => void
+  resetLesson,           // () => void
+} = useIntervalLesson();
+```
+
+### `useIntervalPlayback(options)`
+
+Plays intervals as two sequential notes.
+
+```typescript
+const {
+  isPlaying,             // boolean
+  playInterval,          // (challenge: IntervalChallenge) => Promise<void>
+} = useIntervalPlayback({
+  playNote,              // (note: Note, velocity?: number) => void
+  stopNote,              // (note: Note) => void
+  onNotePlayed,          // Optional: (note: Note) => void for visual feedback
+});
+```
+
+---
+
+## Learn Mode Components
+
+### `<LessonCard />`
+
+Card for lesson list page.
+
+```typescript
+<LessonCard
+  title="Intervals"
+  description="Learn to recognize musical intervals"
+  href="/learn/lesson-1-intervals"
+  status="available" | "locked" | "completed"
+/>
+```
+
+### `<ChallengePrompt />`
+
+Displays instruction and inline feedback.
+
+```typescript
+<ChallengePrompt
+  isPlaying={boolean}              // Show "Listen..." state
+  attempts={number}
+  shouldRevealName={boolean}
+  intervalName={string}
+  feedbackState={'correct' | 'incorrect' | 'final-fail' | null}
+  onReplay={() => void}
+/>
+```
+
+### `<AttemptIndicator />`
+
+Visual dots for attempt tracking.
+
+```typescript
+<AttemptIndicator attempts={number} maxAttempts={number} />
+```
+
+### `<LessonProgress />`
+
+Progress indicator (1/5, 2/5, etc).
+
+```typescript
+<LessonProgress current={number} total={number} />
+```
+
+### `<LessonSummary />`
+
+End-of-lesson score display.
+
+```typescript
+<LessonSummary
+  score={LessonScore}
+  onBack={() => void}
+  onRetry={() => void}
+/>
+```

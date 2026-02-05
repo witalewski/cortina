@@ -1,6 +1,10 @@
 import type { Note, MidiNote } from './music';
 import { midiToNote } from '@/app/utils/music';
 
+/**
+ * Names of musical intervals supported in the lesson system.
+ * These cover common intervals from unison to perfect octave.
+ */
 export type IntervalName = 
   | 'unison'
   | 'minor 2nd'
@@ -12,14 +16,27 @@ export type IntervalName =
   | 'perfect 5th'
   | 'perfect octave';
 
+/**
+ * Direction of an interval relative to the root note.
+ * - 'ascending': target note is higher than root
+ * - 'descending': target note is lower than root  
+ * - 'none': used only for unison (same note)
+ */
 export type IntervalDirection = 'ascending' | 'descending' | 'none';
 
+/**
+ * Static information about a musical interval.
+ */
 export interface IntervalInfo {
   name: IntervalName;
   semitones: number;
   shortName: string; // e.g., "P5", "M3", "m3"
 }
 
+/**
+ * A specific interval challenge presented to the user.
+ * Contains both the abstract interval info and the concrete notes to play.
+ */
 export interface IntervalChallenge {
   interval: IntervalInfo;
   direction: IntervalDirection;
@@ -30,12 +47,18 @@ export interface IntervalChallenge {
   displayName: string; // e.g., "Perfect 5th (ascending)"
 }
 
+/**
+ * Record of a single attempt at a challenge.
+ */
 export interface ChallengeAttempt {
   playedNotes: [Note, Note];
   correct: boolean;
   timestamp: number;
 }
 
+/**
+ * Result of a completed challenge (after success or max attempts).
+ */
 export interface ChallengeResult {
   challenge: IntervalChallenge;
   attempts: ChallengeAttempt[];
@@ -43,13 +66,19 @@ export interface ChallengeResult {
   attemptsCount: number;
 }
 
+/**
+ * Final score for a completed lesson.
+ */
 export interface LessonScore {
   totalChallenges: number;
   correctCount: number;
   results: ChallengeResult[];
 }
 
-// Interval definitions with semitone distances
+/**
+ * All supported intervals with their semitone distances.
+ * Key: interval name, Value: interval info including semitones and short notation
+ */
 export const INTERVALS: Record<IntervalName, IntervalInfo> = {
   'unison': { name: 'unison', semitones: 0, shortName: 'P1' },
   'minor 2nd': { name: 'minor 2nd', semitones: 1, shortName: 'm2' },
